@@ -1,12 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
-project(bptree)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
 
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
-find_package(pybind11 REQUIRED)
+set(PYBIND11_FINDPYTHON ON)
+find_package(pybind11 CONFIG REQUIRED)
 
-pybind11_add_module(_bptree
-    src/bptree.cpp
-    src/wrapper.cpp
-)
-
-target_include_directories(_bptree PRIVATE ${pybind11_INCLUDE_DIRS})
+pybind11_add_module(_bptree MODULE src/bptree.cpp)
+install(TARGETS _bptree DESTINATION ${SKBUILD_PROJECT_NAME})

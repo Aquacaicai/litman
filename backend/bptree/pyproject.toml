@@ -1,6 +1,6 @@
 [project]
 name = "bptree"
-version = "0.0.2"
+version = "0.0.4"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -8,9 +8,6 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = []
-
-[project.scripts]
-bptree = "bptree:main"
 
 [tool.scikit-build]
 minimum-version = "build-system.requires"
