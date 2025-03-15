@@ -1,3 +1,4 @@
-from bptree._bptree import IntBPTree, StringBPTree
+from bptree._bptree import BPTreeIntInt, BPTreeIntStr, BPTreeIntVecInt, BPTreeStrInt, BPTreeStrStr, BPTreeStrVecInt
 
-__all__ = [IntBPTree, StringBPTree]
+__all__ = [BPTreeIntInt, BPTreeIntStr, BPTreeIntVecInt,
+           BPTreeStrInt, BPTreeStrStr, BPTreeStrVecInt]
