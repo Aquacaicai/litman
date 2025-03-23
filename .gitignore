@@ -9,4 +9,8 @@ wheels/
 # Virtual environments
 .venv
 
+# local files
 local/*
+
+# vscode
+.vscode
