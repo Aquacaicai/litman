@@ -16,7 +16,6 @@ std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec) {
 }
 
 #include "bptree.h"
-
 PYBIND11_MODULE(_bptree, m) {
     py::class_<BPTree<int, int>>(m, "BPTreeIntInt")
         .def(py::init<int>())
@@ -25,7 +24,9 @@ PYBIND11_MODULE(_bptree, m) {
         .def("update", &BPTree<int, int>::update)
         .def("find", &BPTree<int, int>::find)
         .def("deserialize", &BPTree<int, int>::deserialize)
-        .def("serialize", &BPTree<int, int>::serialize);
+        .def("serialize", &BPTree<int, int>::serialize)
+        .def("getAllKeys", &BPTree<int, int>::getAllKeys)
+        .def("getAllValues", &BPTree<int, int>::getAllValues);
 
     py::class_<BPTree<int, std::string>>(m, "BPTreeIntStr")
         .def(py::init<int>())
@@ -34,7 +35,9 @@ PYBIND11_MODULE(_bptree, m) {
         .def("update", &BPTree<int, std::string>::update)
         .def("find", &BPTree<int, std::string>::find)
         .def("deserialize", &BPTree<int, std::string>::deserialize)
-        .def("serialize", &BPTree<int, std::string>::serialize);
+        .def("serialize", &BPTree<int, std::string>::serialize)
+        .def("getAllKeys", &BPTree<int, std::string>::getAllKeys)
+        .def("getAllValues", &BPTree<int, std::string>::getAllValues);
 
     py::class_<BPTree<int, std::vector<int>>>(m, "BPTreeIntVecInt")
         .def(py::init<int>())
@@ -43,7 +46,9 @@ PYBIND11_MODULE(_bptree, m) {
         .def("update", &BPTree<int, std::vector<int>>::update)
         .def("find", &BPTree<int, std::vector<int>>::find)
         .def("deserialize", &BPTree<int, std::vector<int>>::deserialize)
-        .def("serialize", &BPTree<int, std::vector<int>>::serialize);
+        .def("serialize", &BPTree<int, std::vector<int>>::serialize)
+        .def("getAllKeys", &BPTree<int, std::vector<int>>::getAllKeys)
+        .def("getAllValues", &BPTree<int, std::vector<int>>::getAllValues);
 
     py::class_<BPTree<std::string, int>>(m, "BPTreeStrInt")
         .def(py::init<int>())
@@ -52,7 +57,9 @@ PYBIND11_MODULE(_bptree, m) {
         .def("update", &BPTree<std::string, int>::update)
         .def("find", &BPTree<std::string, int>::find)
         .def("deserialize", &BPTree<std::string, int>::deserialize)
-        .def("serialize", &BPTree<std::string, int>::serialize);
+        .def("serialize", &BPTree<std::string, int>::serialize)
+        .def("getAllKeys", &BPTree<std::string, int>::getAllKeys)
+        .def("getAllValues", &BPTree<std::string, int>::getAllValues);
 
     py::class_<BPTree<std::string, std::string>>(m, "BPTreeStrStr")
         .def(py::init<int>())
@@ -61,7 +68,9 @@ PYBIND11_MODULE(_bptree, m) {
         .def("update", &BPTree<std::string, std::string>::update)
         .def("find", &BPTree<std::string, std::string>::find)
         .def("deserialize", &BPTree<std::string, std::string>::deserialize)
-        .def("serialize", &BPTree<std::string, std::string>::serialize);
+        .def("serialize", &BPTree<std::string, std::string>::serialize)
+        .def("getAllKeys", &BPTree<std::string, std::string>::getAllKeys)
+        .def("getAllValues", &BPTree<std::string, std::string>::getAllValues);
 
     py::class_<BPTree<std::string, std::vector<int>>>(m, "BPTreeStrVecInt")
         .def(py::init<int>())
@@ -70,5 +79,7 @@ PYBIND11_MODULE(_bptree, m) {
         .def("update", &BPTree<std::string, std::vector<int>>::update)
         .def("find", &BPTree<std::string, std::vector<int>>::find)
         .def("deserialize", &BPTree<std::string, std::vector<int>>::deserialize)
-        .def("serialize", &BPTree<std::string, std::vector<int>>::serialize);
+        .def("serialize", &BPTree<std::string, std::vector<int>>::serialize)
+        .def("getAllKeys", &BPTree<std::string, std::vector<int>>::getAllKeys)
+        .def("getAllValues", &BPTree<std::string, std::vector<int>>::getAllValues);
 }

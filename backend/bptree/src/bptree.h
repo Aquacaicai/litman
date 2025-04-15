@@ -35,6 +35,8 @@ private:
 
 public:
     BPTree(int order);
+    std::vector<KeyT> getAllKeys();
+    std::vector<ValT> getAllValues();
     void insert(KeyT _key, ValT _val);
     void erase(KeyT _key);
     bool update(KeyT _key, ValT _new_val);
@@ -42,6 +44,54 @@ public:
     void deserialize(const std::string& filename);
     void serialize(const std::string& filename);
 };
+
+template<typename KeyT, typename ValT>
+std::vector<KeyT> BPTree<KeyT, ValT>::getAllKeys() {
+    std::vector<KeyT> result;
+
+    if (!root) {
+        return result;
+    }
+
+    Node<KeyT, ValT>* leaf = root;
+    while (!leaf->leaf) {
+        leaf = leaf->ptr2node[0];
+    }
+
+    while (leaf) {
+        for (const KeyT& k : leaf->key) {
+            result.push_back(k);
+        }
+        leaf = leaf->next;
+    }
+
+    return result;
+}
+
+template<typename KeyT, typename ValT>
+std::vector<ValT> BPTree<KeyT, ValT>::getAllValues() {
+    std::vector<ValT> result;
+
+    if (!root) {
+        return result;
+    }
+
+    Node<KeyT, ValT>* leaf = root;
+    while (!leaf->leaf) {
+        leaf = leaf->ptr2node[0];
+    }
+
+    while (leaf) {
+        for (ValT* val_ptr : leaf->ptr2val) {
+            if (val_ptr) {
+                result.push_back(*val_ptr);
+            }
+        }
+        leaf = leaf->next;
+    }
+    return result;
+}
+
 
 template<typename KeyT, typename ValT>
 inline int BPTree<KeyT, ValT>::keyIndex(Node<KeyT, ValT>* _node, KeyT _key) {
