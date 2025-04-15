@@ -5,43 +5,56 @@ class Article:
     def __init__(self,
                  article_id: int,
                  title: str,
-                 authors: List[str],
-                 year: int,
+                 authors: List[str] = None,
+                 year: int = None,
+                 editors: List[str] = None,
                  keywords: List[str] = None,
-                 venue: str = None,
-                 abstract: str = None,
+                 ee: str = None,
+                 publisher: str = None,
+                 isbn: str = None,
+                 volume: str = None,
+                 series: str = None,
+                 school: str = None,
+                 journal: str = None,
                  url: str = None,
                  pages: str = None,
-                 booktitle: str = None,
-                 ee: str = None,
-                 key: str = None):
+                 booktitle: str = None):
+
         self.article_id = article_id
         self.title = title
-        self.authors = authors
-        self.year = year
-        self.keywords = keywords or []
-        self.venue = venue
-        self.abstract = abstract
-        self.url = url
-        self.pages = pages
-        self.booktitle = booktitle
+        self.keywords = keywords
         self.ee = ee
-        self.key = key
+        self.year = year
+        self.authors = authors
+        self.booktitle = booktitle
+        self.url = url
+        self.editors = editors
+        self.pages = pages
+        self.publisher = publisher
+        self.isbn = isbn
+        self.volume = volume
+        self.series = series
+        self.school = school
+        self.journal = journal
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "article_id": self.article_id,
             "title": self.title,
-            "authors": self.authors,
-            "year": self.year,
             "keywords": self.keywords,
-            "venue": self.venue,
-            "abstract": self.abstract,
-            "url": self.url,
-            "pages": self.pages,
-            "booktitle": self.booktitle,
             "ee": self.ee,
-            "key": self.key
+            "year": self.year,
+            "authors": self.authors,
+            "booktitle": self.booktitle,
+            "url": self.url,
+            "editors": self.editors,
+            "pages": self.pages,
+            "publisher": self.publisher,
+            "isbn": self.isbn,
+            "volume": self.volume,
+            "series": self.series,
+            "school": self.school,
+            "journal": self.journal,
         }
 
     @staticmethod
@@ -49,14 +62,18 @@ class Article:
         return Article(
             article_id=data.get("article_id"),
             title=data.get("title"),
-            authors=data.get("authors", []),
-            year=data.get("year"),
-            keywords=data.get("keywords", []),
-            venue=data.get("venue"),
-            abstract=data.get("abstract"),
-            url=data.get("url"),
-            pages=data.get("pages"),
-            booktitle=data.get("booktitle"),
+            keywords=data.get("keywords"),
             ee=data.get("ee"),
-            key=data.get("key")
+            year=data.get("year"),
+            authors=data.get("authors"),
+            booktitle=data.get("booktitle"),
+            url=data.get("url"),
+            editors=data.get("editors"),
+            pages=data.get("pages"),
+            publisher=data.get("publisher"),
+            isbn=data.get("isbn"),
+            volume=data.get("volume"),
+            series=data.get("series"),
+            school=data.get("school"),
+            journal=data.get("journal"),
         )
