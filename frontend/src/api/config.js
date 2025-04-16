@@ -1,6 +1,6 @@
 let config = {
-    apiRoot: process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:5000' : window.API_ROOT,
-    timeout: 15000,
+    apiRoot: (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:2747' : window.API_ROOT) + "/api",
+    timeout: 1500000,
     headers: {
         'Content-Type': 'application/json'
     }

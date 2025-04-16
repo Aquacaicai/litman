@@ -1,3 +1,47 @@
+<script setup>
+import { ref } from 'vue';
+import api from '@/api';
+
+// Active tab state
+const activeTab = ref('import');
+
+const fileInput = ref(null);
+const fileContent = ref(null);
+
+function handleFileChange(event) {
+    const file = event.target.files[0];
+    if (file && file.type === 'text/xml' || file.type === 'application/xml' || file.name.endsWith('.xml')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            fileContent.value = e.target.result;
+        };
+        reader.readAsText(file);
+    } else {
+        alert('Please select a valid XML file');
+        event.target.value = '';
+        fileContent.value = null;
+    }
+}
+function handleImportLiteratureClick() {
+    if (!fileContent.value) {
+        alert('Please select an XML file first');
+        return;
+    }
+
+    api.import.importFromXml(fileContent.value)
+        .then(response => {
+            alert('Import successful!');
+            console.log('Import response:', response);
+        })
+        .catch(error => {
+            alert('Import failed: ' + (error.message || 'Unknown error'));
+            console.error('Import error:', error);
+        });
+}
+
+</script>
+
+
 <template>
     <div>
         <h2 class="text-2xl font-bold mb-6">Manage Literature</h2>
@@ -19,69 +63,14 @@
                     <label class="label">
                         <span class="label-text">Upload XML File</span>
                     </label>
-                    <input type="file" class="file-input file-input-bordered w-full" />
+                    <input type="file" ref="fileInput" @change="handleFileChange" accept=".xml,application/xml,text/xml"
+                        class="file-input file-input-bordered w-full" />
                     <label class="label">
                         <span class="label-text-alt">Supported formats: XML files with literature metadata</span>
                     </label>
                 </div>
                 <div class="flex justify-end mt-4">
-                    <button class="btn btn-primary">Import Literature</button>
-                </div>
-
-                <div class="divider">Import Options</div>
-
-                <div class="form-control">
-                    <div class="flex flex-wrap gap-4">
-                        <label class="label cursor-pointer">
-                            <span class="label-text mr-2">Skip duplicates</span>
-                            <input type="checkbox" checked class="checkbox" />
-                        </label>
-                        <label class="label cursor-pointer">
-                            <span class="label-text mr-2">Merge author information</span>
-                            <input type="checkbox" checked class="checkbox" />
-                        </label>
-                        <label class="label cursor-pointer">
-                            <span class="label-text mr-2">Update existing entries</span>
-                            <input type="checkbox" class="checkbox" />
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Import History -->
-                <div class="mt-6">
-                    <h3 class="font-bold mb-2">Recent Imports</h3>
-                    <div class="overflow-x-auto">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Filename</th>
-                                    <th>Records</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>2023-10-15</td>
-                                    <td>conference_papers.xml</td>
-                                    <td>123</td>
-                                    <td><span class="badge badge-success">Completed</span></td>
-                                </tr>
-                                <tr>
-                                    <td>2023-10-10</td>
-                                    <td>journal_articles.xml</td>
-                                    <td>87</td>
-                                    <td><span class="badge badge-success">Completed</span></td>
-                                </tr>
-                                <tr>
-                                    <td>2023-09-28</td>
-                                    <td>research_papers.xml</td>
-                                    <td>42</td>
-                                    <td><span class="badge badge-error">Failed</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <button class="btn btn-primary" @click="handleImportLiteratureClick">Import Literature</button>
                 </div>
             </div>
         </div>
@@ -282,10 +271,3 @@
         </div>
     </div>
 </template>
-
-<script setup>
-import { ref } from 'vue';
-
-// Active tab state
-const activeTab = ref('import');
-</script>

@@ -8,7 +8,9 @@ dependencies = [
     "bptree",
     "flask>=3.1.0",
     "flask-cors>=5.0.1",
+    "lxml>=5.3.1",
     "networkx>=3.4.2",
+    "nltk>=3.9.1",
 ]
 
 [tool.uv.workspace]
@@ -16,3 +18,9 @@ members = ["backend/bptree"]
 
 [tool.uv.sources]
 bptree = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "dblp-sax-parser>=0.1",
+    "ipykernel>=6.29.5",
+]

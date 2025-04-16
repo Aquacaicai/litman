@@ -13,9 +13,12 @@ class ImportService:
         imported_count = 0
 
         for article in articles:
-            article_id = self.storage.add_article(article)
+            article_id = self.storage.add_article(
+                article, save_immediately=False)
             if article_id > 0:
                 imported_count += 1
+
+        self.storage._save_indices()
 
         return imported_count
 

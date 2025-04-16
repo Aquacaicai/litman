@@ -1,16 +1,15 @@
-import xml.etree.ElementTree as ET
 from typing import List, Optional
 from backend.models.article import Article
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+from lxml import etree
 
 
 def parse_articles_from_xml(xml_content: str) -> List[Article]:
-    xml_content = f"<root>{xml_content}</root>"
-
     articles = []
     try:
-        root = ET.fromstring(xml_content)
+        parser = etree.XMLParser(recover=True)
+        root = etree.fromstring(xml_content.encode('utf-8'), parser)
 
         for entry_type in ['article',
                            'inproceedings',
@@ -23,7 +22,7 @@ def parse_articles_from_xml(xml_content: str) -> List[Article]:
                 article = parse_article_entry(entry, entry_type)
                 if article:
                     articles.append(article)
-    except ET.ParseError as e:
+    except Exception as e:
         raise e
 
     return articles
@@ -35,7 +34,8 @@ def parse_article_entry(entry, entry_type: str) -> Optional[Article]:
         title_elem = entry.find('title')
         title = title_elem.text if title_elem is not None else "Untitled"
 
-        keywords = extract_keywords_basic(title)
+        title = title if title is not None else "Untitled"
+        keywords = extract_keywords_basic(title) if title != "Untitled" else []
 
         ee_elem = entry.find('ee')
         ee = ee_elem.text if ee_elem is not None else None

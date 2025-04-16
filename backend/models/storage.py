@@ -93,7 +93,7 @@ class LiteratureStorage:
 
         return file_path
 
-    def add_article(self, article: Article) -> int:
+    def add_article(self, article: Article, save_immediately=True) -> int:
         if article.article_id is None:
             self.max_article_id += 1
             article.article_id = self.max_article_id
@@ -145,7 +145,15 @@ class LiteratureStorage:
                     self.author_index.update(author, author_articles)
 
         # update title index
-        self.title_index.insert(article.title, article.article_id)
+        if self.title_index.find(article.title) is None:
+            self.title_index.insert(article.title, article.article_id)
+        else:
+            original_title = article.title
+            new_title = f"{original_title} - dup id({article.article_id})"
+
+            article.title = new_title
+
+            self.title_index.insert(new_title, article.article_id)
 
         # update date index
         year_articles = self.date_index.find(article.year)
@@ -156,7 +164,8 @@ class LiteratureStorage:
                 year_articles.append(article.article_id)
                 self.date_index.update(article.year, year_articles)
 
-        self._save_indices()
+        if save_immediately:
+            self._save_indices()
         return article.article_id
 
     def get_article_by_id(self, article_id: int) -> Optional[Article]:
