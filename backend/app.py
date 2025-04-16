@@ -4,6 +4,7 @@ import os
 from backend.config import Config
 from backend.api import api_bp
 from flask import Flask, jsonify, render_template, send_from_directory
+from flask_cors import CORS
 
 
 def create_app(api_root, config_class=Config):
@@ -13,6 +14,9 @@ def create_app(api_root, config_class=Config):
     app = Flask(__name__,
                 static_folder=str(template_dir),
                 template_folder=str(template_dir))
+
+    CORS(app)
+
     app.config.from_object(config_class)
 
     app.register_blueprint(api_bp, url_prefix='/api')
