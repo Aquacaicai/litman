@@ -6,7 +6,20 @@
 #include <fstream> 
 #include <vector>
 #include <queue>
+#include <map>
 #include <sys/socket.h>
+
+std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec) {
+    os << "[";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        os << vec[i];
+        if (i != vec.size() - 1) {
+            os << ", ";
+        }
+    }
+    os << "]";
+    return os;
+}
 
 template<typename KeyT, typename ValT>
 class Node {
@@ -454,6 +467,7 @@ bool BPTree<KeyT, ValT>::update(KeyT _key, ValT _new_val) {
     }
 }
 
+
 template<typename KeyT, typename ValT>
 void BPTree<KeyT, ValT>::serialize(const std::string& filename) {
     std::ofstream outfile(filename, std::ios::binary);
@@ -462,39 +476,110 @@ void BPTree<KeyT, ValT>::serialize(const std::string& filename) {
         return;
     }
 
-    std::queue<Node<KeyT, ValT>*> q;
-    if (root) q.push(root);
+    // order
+    outfile.write(reinterpret_cast<const char*>(&order), sizeof(order));
 
+    // is empty
+    bool has_root = (root != nullptr);
+    outfile.write(reinterpret_cast<const char*>(&has_root), sizeof(has_root));
+    if (!has_root) {
+        outfile.close();
+        return;
+    }
+
+    // level-order trav
+    std::map<Node<KeyT, ValT>*, size_t> node_id_map; // unique id for every node
+    std::queue<Node<KeyT, ValT>*> q;
+    std::vector<Node<KeyT, ValT>*> all_nodes;
+
+    q.push(root);
+    size_t id = 0;
+    node_id_map[root] = id++;
+    all_nodes.push_back(root);
+
+    // id
     while (!q.empty()) {
         Node<KeyT, ValT>* node = q.front();
         q.pop();
 
-        // Write node type (leaf or not)
-        outfile.write(reinterpret_cast<char*>(&node->leaf), sizeof(node->leaf));
+        if (!node->leaf) {
+            for (Node<KeyT, ValT>* child : node->ptr2node) {
+                if (child && node_id_map.find(child) == node_id_map.end()) {
+                    node_id_map[child] = id++;
+                    all_nodes.push_back(child);
+                    q.push(child);
+                }
+            }
+        }
+    }
 
-        // Write keys
+    // node count
+    size_t total_nodes = all_nodes.size();
+    outfile.write(reinterpret_cast<const char*>(&total_nodes), sizeof(total_nodes));
+
+    // data
+    for (Node<KeyT, ValT>* node : all_nodes) {
+        // id
+        size_t node_id = node_id_map[node];
+        outfile.write(reinterpret_cast<const char*>(&node_id), sizeof(node_id));
+
+        // type
+        outfile.write(reinterpret_cast<const char*>(&node->leaf), sizeof(node->leaf));
+
+        // parent
+        size_t parent_id = (node->parent) ? node_id_map[node->parent] : size_t(-1);
+        outfile.write(reinterpret_cast<const char*>(&parent_id), sizeof(parent_id));
+
+        // next
+        size_t next_id = (node->leaf && node->next) ? node_id_map[node->next] : size_t(-1);
+        outfile.write(reinterpret_cast<const char*>(&next_id), sizeof(next_id));
+
+        // keys
         size_t key_count = node->key.size();
-        outfile.write(reinterpret_cast<char*>(&key_count), sizeof(key_count));
-        for (const auto& key : node->key) {
-            outfile.write(reinterpret_cast<const char*>(&key), sizeof(key));
+        outfile.write(reinterpret_cast<const char*>(&key_count), sizeof(key_count));
+        for (const KeyT& key : node->key) {
+            // for str
+            if constexpr (std::is_same_v<KeyT, std::string>) {
+                size_t str_len = key.length();
+                outfile.write(reinterpret_cast<const char*>(&str_len), sizeof(str_len));
+                outfile.write(key.c_str(), str_len);
+            }
+            else {
+                outfile.write(reinterpret_cast<const char*>(&key), sizeof(KeyT));
+            }
         }
 
         if (node->leaf) {
-            // Write values
-            for (const auto& val_ptr : node->ptr2val) {
-                outfile.write(reinterpret_cast<const char*>(val_ptr), sizeof(ValT));
+            // v
+            for (size_t i = 0; i < key_count; i++) {
+                // vec<int>
+                if constexpr (std::is_same_v<ValT, std::vector<int>>) {
+                    const auto& vec = *(node->ptr2val[i]);
+                    size_t vec_size = vec.size();
+                    outfile.write(reinterpret_cast<const char*>(&vec_size), sizeof(vec_size));
+                    for (int val : vec) {
+                        outfile.write(reinterpret_cast<const char*>(&val), sizeof(int));
+                    }
+                }
+                else {
+                    outfile.write(reinterpret_cast<const char*>(node->ptr2val[i]), sizeof(ValT));
+                }
             }
         }
         else {
-            // Write child pointers (push children to queue)
-            for (const auto& child : node->ptr2node) {
-                q.push(child);
+            // child id
+            size_t child_count = node->ptr2node.size();
+            outfile.write(reinterpret_cast<const char*>(&child_count), sizeof(child_count));
+            for (Node<KeyT, ValT>* child : node->ptr2node) {
+                size_t child_id = (child) ? node_id_map[child] : size_t(-1);
+                outfile.write(reinterpret_cast<const char*>(&child_id), sizeof(child_id));
             }
         }
     }
 
     outfile.close();
 }
+
 template<typename KeyT, typename ValT>
 void BPTree<KeyT, ValT>::deserialize(const std::string& filename) {
     std::ifstream infile(filename, std::ios::binary);
@@ -503,61 +588,148 @@ void BPTree<KeyT, ValT>::deserialize(const std::string& filename) {
         return;
     }
 
-    std::queue<Node<KeyT, ValT>*> parent_queue; // Queue to track parent nodes
-    Node<KeyT, ValT>* current_node = nullptr;
-    root = nullptr;
+    // clean
+    if (root) {
+        // trav remove
+        std::queue<Node<KeyT, ValT>*> q;
+        q.push(root);
+        while (!q.empty()) {
+            Node<KeyT, ValT>* node = q.front();
+            q.pop();
+            if (!node->leaf) {
+                for (Node<KeyT, ValT>* child : node->ptr2node) {
+                    if (child) q.push(child);
+                }
+            }
+            else {
+                // release
+                for (ValT* val_ptr : node->ptr2val) {
+                    delete val_ptr;
+                }
+            }
+            delete node;
+        }
+        root = nullptr;
+    }
 
-    while (infile) {
+    // order
+    infile.read(reinterpret_cast<char*>(&order), sizeof(order));
+
+    // is empty
+    bool has_root;
+    infile.read(reinterpret_cast<char*>(&has_root), sizeof(has_root));
+    if (!has_root) {
+        infile.close();
+        return;
+    }
+
+    // count
+    size_t total_nodes;
+    infile.read(reinterpret_cast<char*>(&total_nodes), sizeof(total_nodes));
+
+    std::vector<Node<KeyT, ValT>*> nodes(total_nodes, nullptr);
+    std::vector<size_t> parent_ids(total_nodes);
+    std::vector<size_t> next_ids(total_nodes);
+    std::vector<std::vector<size_t>> children_ids(total_nodes);
+
+    // create nodes
+    for (size_t i = 0; i < total_nodes; i++) {
+        size_t node_id;
+        infile.read(reinterpret_cast<char*>(&node_id), sizeof(node_id));
+
         bool is_leaf;
         infile.read(reinterpret_cast<char*>(&is_leaf), sizeof(is_leaf));
 
-        if (infile.eof()) break;
+        nodes[node_id] = new Node<KeyT, ValT>(is_leaf);
 
-        current_node = new Node<KeyT, ValT>(is_leaf);
+        // parent
+        size_t parent_id;
+        infile.read(reinterpret_cast<char*>(&parent_id), sizeof(parent_id));
+        parent_ids[node_id] = parent_id;
 
-        // Read keys
+        // next
+        size_t next_id;
+        infile.read(reinterpret_cast<char*>(&next_id), sizeof(next_id));
+        next_ids[node_id] = next_id;
+
+        // k
         size_t key_count;
         infile.read(reinterpret_cast<char*>(&key_count), sizeof(key_count));
-        current_node->key.resize(key_count);
-        for (size_t i = 0; i < key_count; ++i) {
-            infile.read(reinterpret_cast<char*>(&current_node->key[i]), sizeof(KeyT));
+        nodes[node_id]->key.resize(key_count);
+        for (size_t j = 0; j < key_count; j++) {
+            // for str
+            if constexpr (std::is_same_v<KeyT, std::string>) {
+                size_t str_len;
+                infile.read(reinterpret_cast<char*>(&str_len), sizeof(str_len));
+                char* buffer = new char[str_len + 1];
+                infile.read(buffer, str_len);
+                buffer[str_len] = '\0';
+                nodes[node_id]->key[j] = std::string(buffer);
+                delete[] buffer;
+            }
+            else {
+                infile.read(reinterpret_cast<char*>(&nodes[node_id]->key[j]), sizeof(KeyT));
+            }
         }
 
         if (is_leaf) {
-            // Read values
-            current_node->ptr2val.resize(key_count);
-            for (size_t i = 0; i < key_count; ++i) {
-                current_node->ptr2val[i] = new ValT();
-                infile.read(reinterpret_cast<char*>(current_node->ptr2val[i]), sizeof(ValT));
-            }
-        }
-        else {
-            // Reserve space for child pointers
-            current_node->ptr2node.resize(key_count + 1, nullptr);
-        }
-
-        // Link to parent
-        if (root == nullptr) {
-            root = current_node;
-        }
-        else {
-            Node<KeyT, ValT>* parent = parent_queue.front();
-            parent_queue.pop();
-
-            // Find the correct position to insert the child
-            for (size_t i = 0; i < parent->ptr2node.size(); ++i) {
-                if (parent->ptr2node[i] == nullptr) {
-                    parent->ptr2node[i] = current_node;
-                    current_node->parent = parent;
-                    break;
+            // v
+            nodes[node_id]->ptr2val.resize(key_count);
+            for (size_t j = 0; j < key_count; j++) {
+                // for vec<int>
+                if constexpr (std::is_same_v<ValT, std::vector<int>>) {
+                    size_t vec_size;
+                    infile.read(reinterpret_cast<char*>(&vec_size), sizeof(vec_size));
+                    std::vector<int>* vec_ptr = new std::vector<int>(vec_size);
+                    for (size_t k = 0; k < vec_size; k++) {
+                        int val;
+                        infile.read(reinterpret_cast<char*>(&val), sizeof(int));
+                        (*vec_ptr)[k] = val;
+                    }
+                    nodes[node_id]->ptr2val[j] = vec_ptr;
+                }
+                else {
+                    ValT* val_ptr = new ValT();
+                    infile.read(reinterpret_cast<char*>(val_ptr), sizeof(ValT));
+                    nodes[node_id]->ptr2val[j] = val_ptr;
                 }
             }
         }
+        else {
+            // child
+            size_t child_count;
+            infile.read(reinterpret_cast<char*>(&child_count), sizeof(child_count));
+            children_ids[node_id].resize(child_count);
+            for (size_t j = 0; j < child_count; j++) {
+                size_t child_id;
+                infile.read(reinterpret_cast<char*>(&child_id), sizeof(child_id));
+                children_ids[node_id][j] = child_id;
+            }
+            nodes[node_id]->ptr2node.resize(child_count, nullptr);
+        }
+    }
 
-        // If not leaf, push to parent queue for children
-        if (!is_leaf) {
-            for (size_t i = 0; i < key_count + 1; ++i) {
-                parent_queue.push(current_node);
+    // link
+    for (size_t i = 0; i < total_nodes; i++) {
+        // parent
+        if (parent_ids[i] != size_t(-1)) {
+            nodes[i]->parent = nodes[parent_ids[i]];
+        }
+        else {
+            root = nodes[i]; // root
+        }
+
+        // next
+        if (nodes[i]->leaf && next_ids[i] != size_t(-1)) {
+            nodes[i]->next = nodes[next_ids[i]];
+        }
+
+        // child
+        if (!nodes[i]->leaf) {
+            for (size_t j = 0; j < children_ids[i].size(); j++) {
+                if (children_ids[i][j] != size_t(-1)) {
+                    nodes[i]->ptr2node[j] = nodes[children_ids[i][j]];
+                }
             }
         }
     }
