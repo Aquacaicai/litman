@@ -3,7 +3,7 @@ import pickle
 from typing import List, Dict, Optional, Tuple, Any, Set
 import random
 from bptree import BPTreeIntInt, BPTreeIntStr, BPTreeIntVecInt, BPTreeStrInt, BPTreeStrStr, BPTreeStrVecInt
-from models.article import Article
+from backend.models.article import Article
 
 # 256MB
 MAX_FILE_SIZE = 256 * 1024 * 1024

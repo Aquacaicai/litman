@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional, Set
-from models.article import Article
-from models.storage import LiteratureStorage
+from backend.models.article import Article
+from backend.models.storage import LiteratureStorage
 
 
 class SearchService:

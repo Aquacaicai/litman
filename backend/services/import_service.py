@@ -1,7 +1,7 @@
 from typing import List, Optional
-from models.article import Article
-from models.storage import LiteratureStorage
-from utils.xml_parser import parse_articles_from_xml
+from backend.models.article import Article
+from backend.models.storage import LiteratureStorage
+from backend.utils.xml_parser import parse_articles_from_xml
 
 
 class ImportService:

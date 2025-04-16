@@ -1,7 +1,6 @@
 import xml.etree.ElementTree as ET
 from typing import List, Optional
-from models.article import Article
-import nltk
+from backend.models.article import Article
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 

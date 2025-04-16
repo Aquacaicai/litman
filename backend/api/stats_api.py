@@ -1,7 +1,7 @@
 from flask import jsonify, request
-from api import api_bp
-from services.stats_service import StatsService
-from config import storage
+from backend.api import api_bp
+from backend.services.stats_service import StatsService
+from backend.config import storage
 
 stats_service = StatsService(storage)
 

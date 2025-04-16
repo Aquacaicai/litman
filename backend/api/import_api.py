@@ -1,7 +1,7 @@
 from flask import jsonify, request
-from api import api_bp
-from services.import_service import ImportService
-from config import storage
+from backend.api import api_bp
+from backend.services.import_service import ImportService
+from backend.config import storage
 
 import_service = ImportService(storage)
 

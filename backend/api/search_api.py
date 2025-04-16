@@ -1,7 +1,7 @@
 from flask import jsonify, request
-from api import api_bp
-from services.search_service import SearchService
-from config import storage
+from backend.api import api_bp
+from backend.services.search_service import SearchService
+from backend.config import storage
 
 search_service = SearchService(storage)
 

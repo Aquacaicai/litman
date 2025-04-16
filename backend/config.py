@@ -1,5 +1,5 @@
 import os
-from models.storage import LiteratureStorage
+from backend.models.storage import LiteratureStorage
 
 
 class Config:
