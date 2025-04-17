@@ -22,6 +22,5 @@ bptree = { workspace = true }
 
 [dependency-groups]
 dev = [
-    "dblp-sax-parser>=0.1",
     "ipykernel>=6.29.5",
 ]
