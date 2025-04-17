@@ -3,13 +3,15 @@ from backend.models.article import Article
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from lxml import etree
+from html import unescape
 
 
 def parse_articles_from_xml(xml_content: str) -> List[Article]:
     articles = []
     try:
-        parser = etree.XMLParser(recover=True)
-        root = etree.fromstring(xml_content.encode('utf-8'), parser)
+        parser = etree.XMLParser(
+            recover=True, resolve_entities=True, encoding="utf-8")
+        root = etree.fromstring(unescape(xml_content).encode('utf-8'), parser)
 
         for entry_type in ['article',
                            'inproceedings',
@@ -47,6 +49,8 @@ def parse_article_entry(entry, entry_type: str) -> Optional[Article]:
         authors = []
         for author_elem in entry.findall('author'):
             if author_elem.text:
+                if (author_elem.text == "Michael Cabanillas-Carbonell"):
+                    pass
                 authors.append(author_elem.text)
 
         booktitle_elem = entry.find('booktitle')

@@ -2,7 +2,7 @@ import os
 import pickle
 from typing import List, Dict, Optional, Tuple, Any, Set
 import random
-from bptree import BPTreeIntInt, BPTreeIntStr, BPTreeIntVecInt, BPTreeStrInt, BPTreeStrStr, BPTreeStrVecInt
+from bptree import BPTreeIntStr, BPTreeIntVecInt, BPTreeWStrInt, BPTreeWStrVecInt
 from backend.models.article import Article
 from thefuzz import process
 
@@ -22,9 +22,9 @@ class LiteratureStorage:
         # literature_id -> (filename, offset, len)
         self.main_index = BPTreeIntStr(order)
         # author -> [literature_id]
-        self.author_index = BPTreeStrVecInt(order)
+        self.author_index = BPTreeWStrVecInt(order)
         # title -> literature_id
-        self.title_index = BPTreeStrInt(order)
+        self.title_index = BPTreeWStrInt(order)
         # year -> [literature_id]
         self.date_index = BPTreeIntVecInt(order)
 
@@ -217,16 +217,9 @@ class LiteratureStorage:
         return matched_articles
 
     def get_author_article_counts(self) -> Dict[str, int]:
-        # brute force count, to be optimized
-        # todo: b+ tree for author -> count
         author_counts = {}
 
-        all_authors = set()
-        for article_id in range(1, self.max_article_id + 1):
-            article = self.get_article_by_id(article_id)
-            if article:
-                for author in article.authors:
-                    all_authors.add(author)
+        all_authors = self.author_index.getAllKeys()
 
         for author in all_authors:
             articles = self.author_index.find(author)

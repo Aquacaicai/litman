@@ -6,16 +6,6 @@ namespace py = pybind11;
 
 #include "bptree.h"
 PYBIND11_MODULE(_bptree, m) {
-    py::class_<BPTree<int, int>>(m, "BPTreeIntInt")
-        .def(py::init<int>())
-        .def("insert", &BPTree<int, int>::insert)
-        .def("erase", &BPTree<int, int>::erase)
-        .def("update", &BPTree<int, int>::update)
-        .def("find", &BPTree<int, int>::find)
-        .def("deserialize", &BPTree<int, int>::deserialize)
-        .def("serialize", &BPTree<int, int>::serialize)
-        .def("getAllKeys", &BPTree<int, int>::getAllKeys)
-        .def("getAllValues", &BPTree<int, int>::getAllValues);
 
     py::class_<BPTree<int, std::string>>(m, "BPTreeIntStr")
         .def(py::init<int>())
@@ -39,36 +29,25 @@ PYBIND11_MODULE(_bptree, m) {
         .def("getAllKeys", &BPTree<int, std::vector<int>>::getAllKeys)
         .def("getAllValues", &BPTree<int, std::vector<int>>::getAllValues);
 
-    py::class_<BPTree<std::string, int>>(m, "BPTreeStrInt")
+    py::class_<BPTree<std::wstring, int>>(m, "BPTreeWStrInt")
         .def(py::init<int>())
-        .def("insert", &BPTree<std::string, int>::insert)
-        .def("erase", &BPTree<std::string, int>::erase)
-        .def("update", &BPTree<std::string, int>::update)
-        .def("find", &BPTree<std::string, int>::find)
-        .def("deserialize", &BPTree<std::string, int>::deserialize)
-        .def("serialize", &BPTree<std::string, int>::serialize)
-        .def("getAllKeys", &BPTree<std::string, int>::getAllKeys)
-        .def("getAllValues", &BPTree<std::string, int>::getAllValues);
+        .def("insert", &BPTree<std::wstring, int>::insert)
+        .def("erase", &BPTree<std::wstring, int>::erase)
+        .def("update", &BPTree<std::wstring, int>::update)
+        .def("find", &BPTree<std::wstring, int>::find)
+        .def("deserialize", &BPTree<std::wstring, int>::deserialize)
+        .def("serialize", &BPTree<std::wstring, int>::serialize)
+        .def("getAllKeys", &BPTree<std::wstring, int>::getAllKeys)
+        .def("getAllValues", &BPTree<std::wstring, int>::getAllValues);
 
-    py::class_<BPTree<std::string, std::string>>(m, "BPTreeStrStr")
+    py::class_<BPTree<std::wstring, std::vector<int>>>(m, "BPTreeWStrVecInt")
         .def(py::init<int>())
-        .def("insert", &BPTree<std::string, std::string>::insert)
-        .def("erase", &BPTree<std::string, std::string>::erase)
-        .def("update", &BPTree<std::string, std::string>::update)
-        .def("find", &BPTree<std::string, std::string>::find)
-        .def("deserialize", &BPTree<std::string, std::string>::deserialize)
-        .def("serialize", &BPTree<std::string, std::string>::serialize)
-        .def("getAllKeys", &BPTree<std::string, std::string>::getAllKeys)
-        .def("getAllValues", &BPTree<std::string, std::string>::getAllValues);
-
-    py::class_<BPTree<std::string, std::vector<int>>>(m, "BPTreeStrVecInt")
-        .def(py::init<int>())
-        .def("insert", &BPTree<std::string, std::vector<int>>::insert)
-        .def("erase", &BPTree<std::string, std::vector<int>>::erase)
-        .def("update", &BPTree<std::string, std::vector<int>>::update)
-        .def("find", &BPTree<std::string, std::vector<int>>::find)
-        .def("deserialize", &BPTree<std::string, std::vector<int>>::deserialize)
-        .def("serialize", &BPTree<std::string, std::vector<int>>::serialize)
-        .def("getAllKeys", &BPTree<std::string, std::vector<int>>::getAllKeys)
-        .def("getAllValues", &BPTree<std::string, std::vector<int>>::getAllValues);
+        .def("insert", &BPTree<std::wstring, std::vector<int>>::insert)
+        .def("erase", &BPTree<std::wstring, std::vector<int>>::erase)
+        .def("update", &BPTree<std::wstring, std::vector<int>>::update)
+        .def("find", &BPTree<std::wstring, std::vector<int>>::find)
+        .def("deserialize", &BPTree<std::wstring, std::vector<int>>::deserialize)
+        .def("serialize", &BPTree<std::wstring, std::vector<int>>::serialize)
+        .def("getAllKeys", &BPTree<std::wstring, std::vector<int>>::getAllKeys)
+        .def("getAllValues", &BPTree<std::wstring, std::vector<int>>::getAllValues);
 }

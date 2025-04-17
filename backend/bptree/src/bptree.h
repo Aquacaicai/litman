@@ -7,6 +7,9 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <string>
+#include <locale>
+#include <codecvt>
 #include <sys/socket.h>
 
 std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec) {
@@ -19,6 +22,13 @@ std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec) {
     }
     os << "]";
     return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const std::wstring& wstr) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    std::string utf8_str = converter.to_bytes(wstr);
+
+    return os << utf8_str;
 }
 
 template<typename KeyT, typename ValT>
@@ -538,11 +548,11 @@ void BPTree<KeyT, ValT>::serialize(const std::string& filename) {
         size_t key_count = node->key.size();
         outfile.write(reinterpret_cast<const char*>(&key_count), sizeof(key_count));
         for (const KeyT& key : node->key) {
-            // for str
-            if constexpr (std::is_same_v<KeyT, std::string>) {
+            // for wstring
+            if constexpr (std::is_same_v<KeyT, std::wstring>) {
                 size_t str_len = key.length();
                 outfile.write(reinterpret_cast<const char*>(&str_len), sizeof(str_len));
-                outfile.write(key.c_str(), str_len);
+                outfile.write(reinterpret_cast<const char*>(key.c_str()), str_len * sizeof(wchar_t));
             }
             else {
                 outfile.write(reinterpret_cast<const char*>(&key), sizeof(KeyT));
@@ -664,14 +674,14 @@ void BPTree<KeyT, ValT>::deserialize(const std::string& filename) {
         infile.read(reinterpret_cast<char*>(&key_count), sizeof(key_count));
         nodes[node_id]->key.resize(key_count);
         for (size_t j = 0; j < key_count; j++) {
-            // for str
-            if constexpr (std::is_same_v<KeyT, std::string>) {
+            // for wstring
+            if constexpr (std::is_same_v<KeyT, std::wstring>) {
                 size_t str_len;
                 infile.read(reinterpret_cast<char*>(&str_len), sizeof(str_len));
-                char* buffer = new char[str_len + 1];
-                infile.read(buffer, str_len);
-                buffer[str_len] = '\0';
-                nodes[node_id]->key[j] = std::string(buffer);
+                wchar_t* buffer = new wchar_t[str_len + 1];
+                infile.read(reinterpret_cast<char*>(buffer), str_len * sizeof(wchar_t));
+                buffer[str_len] = L'\0';
+                nodes[node_id]->key[j] = std::wstring(buffer);
                 delete[] buffer;
             }
             else {
