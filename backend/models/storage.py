@@ -4,6 +4,7 @@ from typing import List, Dict, Optional, Tuple, Any, Set
 import random
 from bptree import BPTreeIntInt, BPTreeIntStr, BPTreeIntVecInt, BPTreeStrInt, BPTreeStrStr, BPTreeStrVecInt
 from backend.models.article import Article
+from thefuzz import process
 
 # 256MB
 MAX_FILE_SIZE = 256 * 1024 * 1024
@@ -82,7 +83,7 @@ class LiteratureStorage:
             return os.path.join(self.binary_dir, "articles_1.bin")
 
         latest_file = sorted(bin_files, key=lambda f: int(
-            f.split('_')[2].split('.')[0]))[-1]
+            f.split('_')[1].split('.')[0]))[-1]
         file_path = os.path.join(self.binary_dir, latest_file)
 
         if os.path.getsize(file_path) >= MAX_FILE_SIZE:
@@ -199,13 +200,19 @@ class LiteratureStorage:
         return collaborators
 
     def search_articles_by_title(self, title_pattern: str) -> List[Article]:
-        # brute force search, to be optimized
-        matched_articles = []
+        all_titles = self.title_index.getAllKeys()
 
-        for article_id in range(1, self.max_article_id + 1):
-            article = self.get_article_by_id(article_id)
-            if article and title_pattern.lower() in article.title.lower():
-                matched_articles.append(article)
+        matches = process.extractBests(
+            title_pattern.lower(), all_titles, score_cutoff=60, limit=None)
+
+        matched_articles = []
+        for matched_title, score in matches:
+            article_id = self.title_index.find(
+                matched_title)
+            if article_id:
+                article = self.get_article_by_id(article_id)
+                if article:
+                    matched_articles.append(article)
 
         return matched_articles
 
