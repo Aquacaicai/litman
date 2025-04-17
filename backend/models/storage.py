@@ -200,15 +200,17 @@ class LiteratureStorage:
         return collaborators
 
     def search_articles_by_title(self, title_pattern: str) -> List[Article]:
+        # brute force search, to be optimized
         matched_articles = []
-        all_titles = self.title_index.getAllKeys()
 
         kws = extract_keywords_basic(title_pattern)
 
-        for title in all_titles:
-            title_kws = extract_keywords_basic(title)
-            if title and all(kw in title_kws for kw in kws):
-                matched_articles.append(self.get_article_by_title(title))
+        for article_id in range(1, self.max_article_id + 1):
+            article = self.get_article_by_id(article_id)
+            if article and article.keywords and all(
+                kw in article.keywords for kw in kws
+            ):
+                matched_articles.append(article)
 
         return matched_articles
 
