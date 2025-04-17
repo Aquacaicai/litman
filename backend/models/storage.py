@@ -6,6 +6,8 @@ from bptree import BPTreeIntStr, BPTreeIntVecInt, BPTreeWStrInt, BPTreeWStrVecIn
 from backend.models.article import Article
 from thefuzz import process
 
+from backend.utils.xml_parser import extract_keywords_basic
+
 # 256MB
 MAX_FILE_SIZE = 256 * 1024 * 1024
 
@@ -198,19 +200,15 @@ class LiteratureStorage:
         return collaborators
 
     def search_articles_by_title(self, title_pattern: str) -> List[Article]:
+        matched_articles = []
         all_titles = self.title_index.getAllKeys()
 
-        matches = process.extractBests(
-            title_pattern.lower(), all_titles, score_cutoff=60, limit=None)
+        kws = extract_keywords_basic(title_pattern)
 
-        matched_articles = []
-        for matched_title, score in matches:
-            article_id = self.title_index.find(
-                matched_title)
-            if article_id:
-                article = self.get_article_by_id(article_id)
-                if article:
-                    matched_articles.append(article)
+        for title in all_titles:
+            title_kws = extract_keywords_basic(title)
+            if title and all(kw in title_kws for kw in kws):
+                matched_articles.append(self.get_article_by_title(title))
 
         return matched_articles
 
