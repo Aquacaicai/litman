@@ -443,7 +443,7 @@ ValT* BPTree<KeyT, ValT>::find(KeyT _key) {
     Node<KeyT, ValT>* leaf = pair.first;
     int loc = pair.second;
     if (loc == -1 || leaf->key[loc] != _key) {
-        // std::cout << "Key " << _key << " is not in B+ tree" << std::endl;
+        std::cout << "Key " << _key << " is not in B+ tree" << std::endl;
         return nullptr;
     }
     else {
@@ -552,7 +552,7 @@ void BPTree<KeyT, ValT>::serialize(const std::string& filename) {
         if (node->leaf) {
             // v
             for (size_t i = 0; i < key_count; i++) {
-                // vec<int>
+                // for vec<int>
                 if constexpr (std::is_same_v<ValT, std::vector<int>>) {
                     const auto& vec = *(node->ptr2val[i]);
                     size_t vec_size = vec.size();
@@ -560,6 +560,13 @@ void BPTree<KeyT, ValT>::serialize(const std::string& filename) {
                     for (int val : vec) {
                         outfile.write(reinterpret_cast<const char*>(&val), sizeof(int));
                     }
+                }
+                // for str
+                else if constexpr (std::is_same_v<ValT, std::string>) {
+                    const auto& str = *(node->ptr2val[i]);
+                    size_t str_len = str.length();
+                    outfile.write(reinterpret_cast<const char*>(&str_len), sizeof(str_len));
+                    outfile.write(str.c_str(), str_len);
                 }
                 else {
                     outfile.write(reinterpret_cast<const char*>(node->ptr2val[i]), sizeof(ValT));
@@ -687,6 +694,17 @@ void BPTree<KeyT, ValT>::deserialize(const std::string& filename) {
                         (*vec_ptr)[k] = val;
                     }
                     nodes[node_id]->ptr2val[j] = vec_ptr;
+                }
+                // for str
+                else if constexpr (std::is_same_v<ValT, std::string>) {
+                    size_t str_len;
+                    infile.read(reinterpret_cast<char*>(&str_len), sizeof(str_len));
+                    char* buffer = new char[str_len + 1];
+                    infile.read(buffer, str_len);
+                    buffer[str_len] = '\0';
+                    std::string* str_ptr = new std::string(buffer);
+                    nodes[node_id]->ptr2val[j] = str_ptr;
+                    delete[] buffer;
                 }
                 else {
                     ValT* val_ptr = new ValT();
