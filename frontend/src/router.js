@@ -3,6 +3,7 @@ import LiteratureSearch from './components/LiteratureSearch.vue';
 import StatisticsView from './components/StatisticsView.vue';
 import CollaborationsView from './components/CollaborationsView.vue';
 import ManageLiterature from './components/ManageLiterature.vue';
+import ArticleDetail from './components/ArticleDetail.vue';
 
 const routes = [
     {
@@ -24,6 +25,12 @@ const routes = [
         path: '/manage',
         name: 'ManageLiterature',
         component: ManageLiterature
+    },
+    {
+        path: '/article/:id',
+        name: 'ArticleDetail',
+        component: ArticleDetail,
+        props: true
     }
 ];
 
