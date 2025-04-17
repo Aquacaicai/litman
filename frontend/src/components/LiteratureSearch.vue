@@ -1,12 +1,12 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import api from '@/api';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
+const router = useRouter();
+const route = useRoute();
 
 const activeTab = ref('byAuthor');
-const router = useRouter();
-
 const authorName = ref('');
 const authorResults = ref([]);
 const title = ref('');
@@ -14,6 +14,40 @@ const titleResults = ref(undefined);
 const fuzzyTitle = ref('');
 const fuzzyTitleResults = ref([]);
 const isLoading = ref(false);
+
+onMounted(() => {
+    // Restore tab if specified in the URL
+    if (route.query.tab) {
+        activeTab.value = route.query.tab;
+    }
+
+    // Restore search parameters if available
+    if (route.query.authorName) {
+        authorName.value = route.query.authorName;
+        if (activeTab.value === 'byAuthor') {
+            handleSearchByAuthorClick();
+        }
+    }
+
+    if (route.query.title) {
+        title.value = route.query.title;
+        if (activeTab.value === 'byTitle') {
+            handleSearchByTitleClick();
+        }
+    }
+
+    if (route.query.fuzzyTitle) {
+        fuzzyTitle.value = route.query.fuzzyTitle;
+        if (activeTab.value === 'fuzzySearch') {
+            handleSearchByFuzzyTitleClick();
+        }
+    }
+});
+
+// Update URL when tab changes to maintain state
+watch(activeTab, (newTab) => {
+    router.replace({ query: { ...route.query, tab: newTab } });
+});
 
 async function handleSearchByAuthorClick() {
     if (!authorName.value.trim()) {
@@ -67,8 +101,25 @@ async function handleSearchByTitleClick() {
 }
 
 function viewArticle(articleId) {
-    console.log(articleId)
-    router.push({ name: 'ArticleDetail', params: { id: articleId } });
+    // Store current state in the route when navigating to article detail
+    let queryParams = {
+        returnTab: activeTab.value
+    };
+
+    // Add relevant search parameters based on current tab
+    if (activeTab.value === 'byAuthor' && authorName.value) {
+        queryParams.authorName = authorName.value;
+    } else if (activeTab.value === 'byTitle' && title.value) {
+        queryParams.title = title.value;
+    } else if (activeTab.value === 'fuzzySearch' && fuzzyTitle.value) {
+        queryParams.fuzzyTitle = fuzzyTitle.value;
+    }
+
+    router.push({
+        name: 'ArticleDetail',
+        params: { id: articleId },
+        query: queryParams
+    });
 }
 </script>
 

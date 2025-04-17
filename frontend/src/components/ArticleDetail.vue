@@ -30,7 +30,19 @@ onMounted(async () => {
 });
 
 function goBack() {
-  router.back();
+  if (route.query.returnTab) {
+    router.push({
+      name: 'LiteratureSearch',
+      query: {
+        tab: route.query.returnTab,
+        authorName: route.query.authorName || '',
+        title: route.query.title || '',
+        fuzzyTitle: route.query.fuzzyTitle || ''
+      }
+    });
+  } else {
+    router.back();
+  }
 }
 </script>
 
@@ -38,7 +50,7 @@ function goBack() {
   <div class="container mx-auto p-4">
     <button @click="goBack" class="btn btn-ghost mb-4">
       <ArrowUturnLeftIcon class="size-5" />
-      Back to Search
+      Back
     </button>
 
     <div v-if="isLoading" class="flex justify-center my-8">
