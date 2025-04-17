@@ -57,23 +57,20 @@ class LiteratureStorage:
         self.date_index.serialize(os.path.join(
             self.index_dir, "date_index.dat"))
 
+        with open(os.path.join(self.storage_dir, "max_article_id"), "w") as f:
+            f.write(str(self.max_article_id))
+
     def _get_max_article_id(self) -> int:
-        max_id = 0
-        bin_files = [f for f in os.listdir(
-            self.binary_dir) if f.startswith("articles_")]
-        if not bin_files:
-            return 0
+        max_id_path = os.path.join(self.storage_dir, "max_article_id")
 
-        for file_name in bin_files:
-            parts = file_name.split('_')
-            if len(parts) >= 3:
-                try:
-                    end_id = int(parts[2].split('.')[0])
-                    max_id = max(max_id, end_id)
-                except ValueError:
-                    continue
+        if os.path.exists(max_id_path):
+            with open(max_id_path, "r") as f:
+                return int(f.read().strip())
 
-        return max_id
+        with open(max_id_path, "w") as f:
+            f.write("0")
+
+        return 0
 
     def _get_current_bin_file(self) -> str:
         bin_files = [f for f in os.listdir(
@@ -151,6 +148,7 @@ class LiteratureStorage:
 
         if save_immediately:
             self._save_indices()
+
         return article.article_id
 
     def get_article_by_id(self, article_id: int) -> Optional[Article]:
@@ -229,7 +227,6 @@ class LiteratureStorage:
         return author_counts
 
     def get_yearly_keyword_frequencies(self) -> Dict[int, Dict[str, int]]:
-        # brute force count, to be optimized
         yearly_keywords = {}
 
         # all articles
