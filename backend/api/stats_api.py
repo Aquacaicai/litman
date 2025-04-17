@@ -21,7 +21,8 @@ def get_author_article_counts():
 
 @api_bp.route('/stats/keywords/yearly', methods=['GET'])
 def get_yearly_keyword_frequencies():
-    data = stats_service.get_yearly_keyword_frequencies()
+    limit = request.args.get('limit', default=10, type=int)
+    data = stats_service.get_yearly_keyword_frequencies(limit=limit)
 
     formatted_data = {}
     for year, keywords in data.items():

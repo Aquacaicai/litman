@@ -226,8 +226,9 @@ class LiteratureStorage:
 
         return author_counts
 
-    def get_yearly_keyword_frequencies(self) -> Dict[int, Dict[str, int]]:
+    def get_yearly_keyword_frequencies(self) -> Dict[int, Dict[str, float]]:
         yearly_keywords = {}
+        yearly_total_articles = {}
 
         # all articles
         for article_id in range(1, self.max_article_id + 1):
@@ -235,12 +236,19 @@ class LiteratureStorage:
             if article and article.keywords:
                 if article.year not in yearly_keywords:
                     yearly_keywords[article.year] = {}
+                    yearly_total_articles[article.year] = 0
 
                 # all keywords
                 for keyword in article.keywords:
                     if keyword not in yearly_keywords[article.year]:
                         yearly_keywords[article.year][keyword] = 0
                     yearly_keywords[article.year][keyword] += 1
+                yearly_total_articles[article.year] += 1
+
+        for year in yearly_keywords:
+            total = yearly_total_articles[year]
+            for keyword in yearly_keywords[year]:
+                yearly_keywords[year][keyword] = yearly_keywords[year][keyword] / total
 
         return yearly_keywords
 

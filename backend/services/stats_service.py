@@ -10,13 +10,13 @@ class StatsService:
         counts = self.storage.get_author_article_counts()
         return sorted(counts.items(), key=lambda x: x[1], reverse=True)
 
-    def get_yearly_keyword_frequencies(self) -> Dict[int, List[Tuple[str, int]]]:
+    def get_yearly_keyword_frequencies(self, limit: int = 10) -> Dict[int, List[Tuple[str, int]]]:
         yearly_keywords = self.storage.get_yearly_keyword_frequencies()
 
         result = {}
         for year, keywords in yearly_keywords.items():
             result[year] = sorted(
-                keywords.items(), key=lambda x: x[1], reverse=True)
+                keywords.items(), key=lambda x: x[1], reverse=True)[:limit]
 
         return result
 
