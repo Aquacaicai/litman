@@ -79,7 +79,7 @@ class LiteratureStorage:
             self.binary_dir) if f.startswith("articles_")]
 
         if not bin_files:
-            return os.path.join(self.binary_dir, "articles_1_1.bin")
+            return os.path.join(self.binary_dir, "articles_1.bin")
 
         latest_file = sorted(bin_files, key=lambda f: int(
             f.split('_')[2].split('.')[0]))[-1]
@@ -87,8 +87,7 @@ class LiteratureStorage:
 
         if os.path.getsize(file_path) >= MAX_FILE_SIZE:
             start_id = int(latest_file.split('_')[2].split('.')[0]) + 1
-            end_id = start_id  # this will be updated later
-            new_file = f"articles_{start_id}_{end_id}.bin"
+            new_file = f"articles_{start_id}.bin"
             return os.path.join(self.binary_dir, new_file)
 
         return file_path
@@ -104,24 +103,9 @@ class LiteratureStorage:
         if os.path.exists(current_file_path) and os.path.getsize(current_file_path) + len(article_data) > MAX_FILE_SIZE:
             # new file
             start_id = article.article_id
-            end_id = start_id
-            new_file = f"articles_{start_id}_{end_id}.bin"
+            new_file = f"articles_{start_id}.bin"
             self.current_bin_file = os.path.join(self.binary_dir, new_file)
             current_file_path = self.current_bin_file
-        else:
-            # update file name
-            if os.path.exists(current_file_path):
-                dir_name, file_name = os.path.split(current_file_path)
-                parts = file_name.split('_')
-                if len(parts) >= 3:
-                    start_id = int(parts[1])
-                    parts[2] = f"{article.article_id}.bin"
-                    new_file_name = '_'.join(parts)
-                    new_file_path = os.path.join(dir_name, new_file_name)
-                    if current_file_path != new_file_path:
-                        os.rename(current_file_path, new_file_path)
-                        self.current_bin_file = new_file_path
-                        current_file_path = new_file_path
 
         # write data
         with open(current_file_path, 'ab') as f:
