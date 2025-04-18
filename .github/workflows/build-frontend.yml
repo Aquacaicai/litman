@@ -1,0 +1,38 @@
+name: Build and Update Frontend
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "frontend/**"
+  pull_request:
+    paths:
+      - "frontend/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install
+
+      - name: Build the project
+        working-directory: frontend
+        run: bun run build
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          cd frontend
+          git add dist/* -f
+          git commit -m "ci: build and update frontend dist files"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
