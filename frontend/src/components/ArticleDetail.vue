@@ -30,16 +30,27 @@ onMounted(async () => {
 });
 
 function goBack() {
-  if (route.query.returnTab) {
-    router.push({
-      name: 'LiteratureSearch',
-      query: {
-        tab: route.query.returnTab,
-        authorName: route.query.authorName || '',
-        title: route.query.title || '',
-        fuzzyTitle: route.query.fuzzyTitle || ''
-      }
-    });
+  if (route.query.returnPage) {
+    if (route.query.returnPage === 'LiteratureSearch') {
+      router.push({
+        name: 'LiteratureSearch',
+        query: {
+          tab: route.query.returnTab,
+          authorName: route.query.authorName || '',
+          title: route.query.title || '',
+          fuzzyTitle: route.query.fuzzyTitle || ''
+        }
+      })
+    } else if (route.query.returnPage === 'Collaborations') {
+      router.push({
+        name: 'Collaborations',
+        query: {
+          tab: route.query.returnTab,
+          coauthor: route.query.coauthor || '',
+          authorName: route.query.authorName || '',
+        }
+      })
+    }
   } else {
     router.back();
   }

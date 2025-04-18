@@ -103,6 +103,7 @@ async function handleSearchByTitleClick() {
 function viewArticle(articleId) {
     // Store current state in the route when navigating to article detail
     let queryParams = {
+        returnPage: "LiteratureSearch",
         returnTab: activeTab.value
     };
 

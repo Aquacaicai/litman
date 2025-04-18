@@ -20,5 +20,22 @@ def get_author_collaborators(author):
     collaborators = search_service.get_collaborators(author)
     return jsonify({
         'success': True,
-        'data': list(collaborators)
+        'data': collaborators
     })
+
+
+@api_bp.route('/authors/<string:author>/coauthor-articles', methods=['GET'])
+def get_author_coauthor_articles(author):
+    coauthor = request.args.get('coauthor', '')
+
+    if coauthor:
+        articles = search_service.get_coauthor_articles(author, coauthor)
+        return jsonify({
+            'success': True,
+            'data': articles
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'empty coauthor name'
+        })

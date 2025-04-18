@@ -13,3 +13,11 @@ export function getAuthorCollaborators(author) {
         method: 'get'
     });
 }
+
+export function getAuthorCoauthoredArticles(author, coauthor) {
+    return request({
+        url: `/authors/${encodeURIComponent(author)}/coauthor-articles`,
+        method: 'get',
+        params: { coauthor: coauthor }
+    });
+}

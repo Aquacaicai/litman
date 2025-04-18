@@ -188,16 +188,26 @@ class LiteratureStorage:
 
         return self.get_article_by_id(article_id)
 
-    def get_collaborators(self, author: str) -> Set[str]:
+    def get_collaborators(self, author: str) -> Dict[str, int]:
         articles = self.get_articles_by_author(author)
-        collaborators = set()
+        collaborators = {}
 
         for article in articles:
             for coauthor in article.authors:
                 if coauthor != author:
-                    collaborators.add(coauthor)
+                    if coauthor in collaborators.keys():
+                        collaborators[coauthor] += 1
+                    else:
+                        collaborators[coauthor] = 1
 
         return collaborators
+
+    def get_coauthor_articles(self, author: str, coauthor: str) -> List[Article]:
+        articles = self.get_articles_by_author(author)
+        articles = [
+            article for article in articles if coauthor in article.authors]
+
+        return articles
 
     def search_articles_by_title(self, title_pattern: str) -> List[Article]:
         # brute force search, to be optimized

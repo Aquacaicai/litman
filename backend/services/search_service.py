@@ -13,8 +13,12 @@ class SearchService:
     def get_article_by_title(self, title: str) -> Optional[Article]:
         return self.storage.get_article_by_title(title)
 
-    def get_collaborators(self, author: str) -> Set[str]:
+    def get_collaborators(self, author: str) -> Dict[str, int]:
         return self.storage.get_collaborators(author)
+
+    def get_coauthor_articles(self, author: str, coauthor: str) -> List[Dict]:
+        res = self.storage.get_coauthor_articles(author, coauthor)
+        return [article.to_dict() for article in res]
 
     def search_articles_by_title(self, title_pattern: str) -> List[Article]:
         return self.storage.search_articles_by_title(title_pattern)
