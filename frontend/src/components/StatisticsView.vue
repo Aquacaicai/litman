@@ -270,15 +270,16 @@ watch(activeTab, (newValue, oldValue) => {
             <div class="card-body">
                 <h2 class="card-title">Publications by Author</h2>
 
-                <div class="form-control mb-4 h-12">
-                    <input type="text" placeholder="Filter authors" v-model="authorFilter"
-                        class="input input-bordered flex-1" />
-                </div>
+
                 <div v-if="isLoading" class="flex justify-center my-4">
                     <span class="loading loading-spinner loading-lg"></span>
                 </div>
 
                 <div v-else-if="authorStats">
+                    <div class="form-control mb-4 h-12">
+                        <input type="text" placeholder="Filter authors" v-model="authorFilter"
+                            class="input input-bordered flex-1" />
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="table">
                             <thead>
@@ -323,7 +324,12 @@ watch(activeTab, (newValue, oldValue) => {
                     <div class="w-full h-80">
                         <v-chart class="w-full h-full" :option="authorChartOptions" autoresize />
                     </div>
+                </div>
 
+                <div v-else class="w-full h-80 bg-base-200 mt-6 flex items-center justify-center">
+                    <div class="text-center">
+                        <p class="text-lg mb-2">No keyword data available</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -333,22 +339,23 @@ watch(activeTab, (newValue, oldValue) => {
             <div class="card-body">
                 <h2 class="card-title">Keyword Trends by Year</h2>
 
-                <div class="form-control mb-4">
-                    <div class="overflow-x-auto" style="max-width: 100%">
-                        <div class="join whitespace-nowrap" style="padding-bottom: 5px;">
-                            <button v-for="year in availableYears" :key="year" class="join-item btn"
-                                :class="{ 'btn-active': selectedYear === year.toString() }"
-                                @click="selectedYear = year.toString()">
-                                {{ year }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+
 
                 <div v-if="isLoading" class="flex justify-center my-4">
                     <span class="loading loading-spinner loading-lg"></span>
                 </div>
                 <div v-else-if="keywordsStats && selectedYear" class="overflow-x-auto">
+                    <div class="form-control mb-4">
+                        <div class="overflow-x-auto" style="max-width: 100%">
+                            <div class="join whitespace-nowrap" style="padding-bottom: 5px;">
+                                <button v-for="year in availableYears" :key="year" class="join-item btn"
+                                    :class="{ 'btn-active': selectedYear === year.toString() }"
+                                    @click="selectedYear = year.toString()">
+                                    {{ year }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <table class="table">
                         <thead>
                             <tr>
