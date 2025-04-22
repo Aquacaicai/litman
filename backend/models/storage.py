@@ -5,7 +5,7 @@ import random
 from bptree import BPTreeIntStr, BPTreeIntVecInt, BPTreeWStrInt, BPTreeWStrVecInt
 from backend.models.article import Article
 from thefuzz import process
-
+import time
 from backend.utils.xml_parser import extract_keywords_basic
 
 # 256MB
@@ -27,6 +27,8 @@ class LiteratureStorage:
         self.author_index = BPTreeWStrVecInt(order)
         # title -> literature_id
         self.title_index = BPTreeWStrInt(order)
+        # keyword -> [literature_id]
+        self.keyword_index = BPTreeWStrVecInt(order)
         # year -> [literature_id]
         self.date_index = BPTreeIntVecInt(order)
 
@@ -38,6 +40,7 @@ class LiteratureStorage:
         main_index_file = os.path.join(self.index_dir, "main_index.dat")
         author_index_file = os.path.join(self.index_dir, "author_index.dat")
         title_index_file = os.path.join(self.index_dir, "title_index.dat")
+        keyword_index_file = os.path.join(self.index_dir, "keyword_index.dat")
         date_index_file = os.path.join(self.index_dir, "date_index.dat")
 
         if os.path.exists(main_index_file):
@@ -46,6 +49,8 @@ class LiteratureStorage:
             self.author_index.deserialize(author_index_file)
         if os.path.exists(title_index_file):
             self.title_index.deserialize(title_index_file)
+        if os.path.exists(keyword_index_file):
+            self.keyword_index.deserialize(keyword_index_file)
         if os.path.exists(date_index_file):
             self.date_index.deserialize(date_index_file)
 
@@ -56,6 +61,8 @@ class LiteratureStorage:
             self.index_dir, "author_index.dat"))
         self.title_index.serialize(os.path.join(
             self.index_dir, "title_index.dat"))
+        self.keyword_index.serialize(os.path.join(
+            self.index_dir, "keyword_index.dat"))
         self.date_index.serialize(os.path.join(
             self.index_dir, "date_index.dat"))
 
@@ -127,6 +134,16 @@ class LiteratureStorage:
                 if article.article_id not in author_articles:
                     author_articles.append(article.article_id)
                     self.author_index.update(author, author_articles)
+
+        # update keyword index
+        for keyword in article.keywords:
+            kw_articles = self.keyword_index.find(keyword)
+            if kw_articles is None:
+                self.keyword_index.insert(keyword, [article.article_id])
+            else:
+                if article.article_id not in kw_articles:
+                    kw_articles.append(article.article_id)
+                    self.keyword_index.update(keyword, kw_articles)
 
         # update title index
         if self.title_index.find(article.title) is None:
@@ -210,18 +227,14 @@ class LiteratureStorage:
         return articles
 
     def search_articles_by_title(self, title_pattern: str) -> List[Article]:
-        # brute force search, to be optimized
-        matched_articles = []
-
         kws = extract_keywords_basic(title_pattern)
 
-        for article_id in range(1, self.max_article_id + 1):
-            article = self.get_article_by_id(article_id)
-            if article and article.keywords and all(
-                kw in article.keywords for kw in kws
-            ):
-                matched_articles.append(article)
+        result_set = set(self.keyword_index.find(kws[0]))
 
+        for kw in kws[1:]:
+            result_set.intersection_update(set(self.keyword_index.find(kw)))
+
+        matched_articles = [self.get_article_by_id(id) for id in result_set]
         return matched_articles
 
     def get_author_article_counts(self) -> Dict[str, int]:
@@ -240,25 +253,38 @@ class LiteratureStorage:
         yearly_keywords = {}
         yearly_total_articles = {}
 
-        # all articles
-        for article_id in range(1, self.max_article_id + 1):
-            article = self.get_article_by_id(article_id)
-            if article and article.keywords:
-                if article.year not in yearly_keywords:
-                    yearly_keywords[article.year] = {}
-                    yearly_total_articles[article.year] = 0
+        years = self.date_index.getAllKeys()[1:]
+        article_ids_per_year = self.date_index.getAllValues()[1:]
+        for year, article_ids in zip(years, article_ids_per_year):
+            if year == 0:
+                continue
+            yearly_total_articles[year] = len(article_ids)
+            yearly_keywords[year] = {}
 
-                # all keywords
-                for keyword in article.keywords:
-                    if keyword not in yearly_keywords[article.year]:
-                        yearly_keywords[article.year][keyword] = 0
-                    yearly_keywords[article.year][keyword] += 1
-                yearly_total_articles[article.year] += 1
+        keyword_count = 0
+        keywords = self.keyword_index.getAllKeys()
+        keyword_article_ids = self.keyword_index.getAllValues()
 
+        article_to_year = {}
+        for year, article_ids in zip(years, article_ids_per_year):
+            for article_id in article_ids:
+                article_to_year[article_id] = year
+
+        for keyword, article_ids in zip(keywords, keyword_article_ids):
+            keyword_count += 1
+            for article_id in article_ids:
+                year = article_to_year.get(article_id)
+                if year is not None:
+                    if keyword not in yearly_keywords[year]:
+                        yearly_keywords[year][keyword] = 0
+                    yearly_keywords[year][keyword] += 1
+
+        freq_count = 0
         for year in yearly_keywords:
             total = yearly_total_articles[year]
             for keyword in yearly_keywords[year]:
                 yearly_keywords[year][keyword] = yearly_keywords[year][keyword] / total
+                freq_count += 1
 
         return yearly_keywords
 
