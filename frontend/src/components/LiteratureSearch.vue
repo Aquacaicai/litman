@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
 import api from '@/api';
 import { useRouter, useRoute } from 'vue-router';
+import { ref, onMounted, watch, computed, nextTick } from 'vue';
+import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/vue/16/solid';
 
 const router = useRouter();
 const route = useRoute();
@@ -14,6 +15,10 @@ const titleResults = ref(undefined);
 const fuzzyTitle = ref('');
 const fuzzyTitleResults = ref([]);
 const isLoading = ref(false);
+
+// Pagination for fuzzy search
+const currentPage = ref(1);
+const itemsPerPage = 50;
 
 onMounted(() => {
     // Restore tab if specified in the URL
@@ -40,6 +45,9 @@ onMounted(() => {
         fuzzyTitle.value = route.query.fuzzyTitle;
         if (activeTab.value === 'fuzzySearch') {
             handleSearchByFuzzyTitleClick();
+            if (route.query.page) {
+                currentPage.value = parseInt(route.query.page) || 1;
+            }
         }
     }
 });
@@ -48,6 +56,23 @@ onMounted(() => {
 watch(activeTab, (newTab) => {
     router.replace({ query: { ...route.query, tab: newTab } });
 });
+
+watch(currentPage, (newPage) => {
+    nextTick(() => {
+        const activeButton = document.querySelector('.btn-active');
+        if (activeButton) {
+            const container = activeButton.closest('.overflow-x-auto');
+            if (container) {
+                const containerWidth = container.offsetWidth;
+                const buttonLeft = activeButton.offsetLeft;
+                const buttonWidth = activeButton.offsetWidth;
+
+                container.scrollLeft = buttonLeft - (containerWidth / 2) + (buttonWidth / 2) - 2 * buttonWidth;
+            }
+        }
+    });
+});
+
 
 async function handleSearchByAuthorClick() {
     if (!authorName.value.trim()) {
@@ -76,12 +101,33 @@ async function handleSearchByFuzzyTitleClick() {
     try {
         const results = await api.search.searchByTitle(fuzzyTitle.value);
         fuzzyTitleResults.value = results.data;
+        currentPage.value = 1;
     } catch (error) {
         console.error('Error fetching fuzzy title articles:', error);
     } finally {
         isLoading.value = false;
     }
 }
+
+const totalPages = computed(() => {
+    if (!fuzzyTitleResults.value || fuzzyTitleResults.value.length === 0) return 0;
+    return Math.ceil(fuzzyTitleResults.value.length / itemsPerPage);
+});
+
+const paginatedFuzzyResults = computed(() => {
+    if (!fuzzyTitleResults.value || fuzzyTitleResults.value.length === 0) return [];
+
+    const start = (currentPage.value - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return fuzzyTitleResults.value.slice(start, end);
+});
+
+watch(totalPages, (newTotal) => {
+    if (currentPage.value > newTotal && newTotal > 0) {
+        currentPage.value = 1;
+    }
+});
+
 
 async function handleSearchByTitleClick() {
     if (!title.value.trim()) {
@@ -114,6 +160,7 @@ function viewArticle(articleId) {
         queryParams.title = title.value;
     } else if (activeTab.value === 'fuzzySearch' && fuzzyTitle.value) {
         queryParams.fuzzyTitle = fuzzyTitle.value;
+        queryParams.page = currentPage.value;
     }
 
     router.push({
@@ -122,6 +169,7 @@ function viewArticle(articleId) {
         query: queryParams
     });
 }
+
 </script>
 
 <template>
@@ -272,7 +320,7 @@ function viewArticle(articleId) {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="article in fuzzyTitleResults" :key="article.article_id">
+                            <tr v-for="article in paginatedFuzzyResults" :key="article.article_id">
                                 <td>{{ article.title }}</td>
                                 <td>{{ article.year }}</td>
                                 <td>{{ article.authors ? article.authors.join(', ') : "" }}</td>
@@ -283,6 +331,29 @@ function viewArticle(articleId) {
                             </tr>
                         </tbody>
                     </table>
+
+                    <div v-if="fuzzyTitleResults.length > 0" class="mt-4 flex justify-center">
+                        <div class="flex join">
+                            <button class="join-item btn" :class="{ 'btn-disabled': currentPage === 1 }"
+                                @click="currentPage--" :disabled="currentPage === 1">
+                                <ChevronDoubleLeftIcon class="size-4" />
+                            </button>
+
+                            <div class="join-item overflow-x-auto max-w-[50vw] flex" style="scrollbar-width: none;">
+                                <div class="join flex">
+                                    <button v-for="page in totalPages" :key="page" class="join-item btn"
+                                        :class="{ 'btn-active': currentPage === page }" @click="currentPage = page">
+                                        {{ page }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button class="join-item btn" :class="{ 'btn-disabled': currentPage === totalPages }"
+                                @click="currentPage++" :disabled="currentPage === totalPages">
+                                <ChevronDoubleRightIcon class="size-4" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

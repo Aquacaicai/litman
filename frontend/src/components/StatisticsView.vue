@@ -339,8 +339,6 @@ watch(activeTab, (newValue, oldValue) => {
             <div class="card-body">
                 <h2 class="card-title">Keyword Trends by Year</h2>
 
-
-
                 <div v-if="isLoading" class="flex justify-center my-4">
                     <span class="loading loading-spinner loading-lg"></span>
                 </div>
