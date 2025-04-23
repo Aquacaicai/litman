@@ -50,8 +50,6 @@ function handleImportLiteratureClick() {
             <a class="tab" :class="{ 'tab-active': activeTab === 'import' }" @click="activeTab = 'import'">Import
                 Literature</a>
             <a class="tab" :class="{ 'tab-active': activeTab === 'add' }" @click="activeTab = 'add'">Add Manually</a>
-            <a class="tab" :class="{ 'tab-active': activeTab === 'manage' }" @click="activeTab = 'manage'">Manage
-                Existing</a>
         </div>
 
         <!-- Import Literature -->
@@ -150,122 +148,6 @@ function handleImportLiteratureClick() {
                 <div class="flex justify-end mt-4 gap-2">
                     <button class="btn btn-ghost">Reset</button>
                     <button class="btn btn-primary">Add Literature</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Manage Existing -->
-        <div v-if="activeTab === 'manage'" class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title">Manage Existing Literature</h2>
-
-                <div class="form-control mb-4">
-                    <div class="flex gap-2">
-                        <input type="text" placeholder="Search literature" class="input input-bordered flex-1" />
-                        <select class="select select-bordered">
-                            <option>All Types</option>
-                            <option>Journal Articles</option>
-                            <option>Conference Papers</option>
-                            <option>Book Chapters</option>
-                            <option>Technical Reports</option>
-                        </select>
-                        <button class="btn btn-primary">Search</button>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Authors</th>
-                                <th>Year</th>
-                                <th>Type</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Sample Paper Title 1</td>
-                                <td>Author, A., Author, B.</td>
-                                <td>2023</td>
-                                <td>Journal Article</td>
-                                <td>
-                                    <div class="flex gap-1">
-                                        <button class="btn btn-xs btn-ghost">Edit</button>
-                                        <button class="btn btn-xs btn-error">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Sample Paper Title 2</td>
-                                <td>Author, C., Author, D.</td>
-                                <td>2022</td>
-                                <td>Conference Paper</td>
-                                <td>
-                                    <div class="flex gap-1">
-                                        <button class="btn btn-xs btn-ghost">Edit</button>
-                                        <button class="btn btn-xs btn-error">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Sample Paper Title 3</td>
-                                <td>Author, A., Author, E.</td>
-                                <td>2022</td>
-                                <td>Journal Article</td>
-                                <td>
-                                    <div class="flex gap-1">
-                                        <button class="btn btn-xs btn-ghost">Edit</button>
-                                        <button class="btn btn-xs btn-error">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Sample Paper Title 4</td>
-                                <td>Author, F., Author, G., Author, H.</td>
-                                <td>2021</td>
-                                <td>Book Chapter</td>
-                                <td>
-                                    <div class="flex gap-1">
-                                        <button class="btn btn-xs btn-ghost">Edit</button>
-                                        <button class="btn btn-xs btn-error">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Sample Paper Title 5</td>
-                                <td>Author, B., Author, I.</td>
-                                <td>2021</td>
-                                <td>Technical Report</td>
-                                <td>
-                                    <div class="flex gap-1">
-                                        <button class="btn btn-xs btn-ghost">Edit</button>
-                                        <button class="btn btn-xs btn-error">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="flex justify-between mt-4">
-                    <div class="btn-group">
-                        <button class="btn btn-sm">«</button>
-                        <button class="btn btn-sm">Page 1</button>
-                        <button class="btn btn-sm">»</button>
-                    </div>
-                    <div>
-                        <span class="mr-2">Showing 5 of 123 results</span>
-                    </div>
-                </div>
-
-                <!-- Edit modal placeholder - would be implemented as a modal component -->
-                <div class="mt-6 p-4 bg-base-300 rounded-box">
-                    <p class="font-bold">Note:</p>
-                    <p>Clicking the Edit button would open a modal with a form similar to the "Add Manually" form,
-                        pre-filled with the literature's data.</p>
-                    <p>The Delete button would prompt for confirmation before removing the item.</p>
                 </div>
             </div>
         </div>
