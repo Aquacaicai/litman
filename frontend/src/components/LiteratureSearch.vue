@@ -1,7 +1,7 @@
 <script setup>
 import api from '@/api';
 import { useRouter, useRoute } from 'vue-router';
-import { ref, onMounted, watch, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/vue/16/solid';
 
 const router = useRouter();
@@ -57,20 +57,68 @@ watch(activeTab, (newTab) => {
     router.replace({ query: { ...route.query, tab: newTab } });
 });
 
-watch(currentPage, (newPage) => {
+const centerActiveButton = () => {
     nextTick(() => {
-        const activeButton = document.querySelector('.btn-active');
-        if (activeButton) {
-            const container = activeButton.closest('.overflow-x-auto');
-            if (container) {
-                const containerWidth = container.offsetWidth;
-                const buttonLeft = activeButton.offsetLeft;
-                const buttonWidth = activeButton.offsetWidth;
+        setTimeout(() => {
+            const activeButton = document.querySelector('.pagination-button.btn-active');
+            if (!activeButton) return;
 
-                container.scrollLeft = buttonLeft - (containerWidth / 2) + (buttonWidth / 2) - 2 * buttonWidth;
+            const container = document.querySelector('.pagination-buttons-container');
+            if (!container) return;
+
+            const containerWidth = container.clientWidth;
+            const allButtons = Array.from(document.querySelectorAll('.pagination-button'));
+            const activeIndex = allButtons.indexOf(activeButton);
+
+            let totalWidth = 0;
+            let targetPosition = 0;
+
+            for (let i = 0; i < allButtons.length; i++) {
+                const btn = allButtons[i];
+                if (i < activeIndex) {
+                    totalWidth += btn.offsetWidth;
+                } else if (i === activeIndex) {
+                    targetPosition = totalWidth + (btn.offsetWidth / 2) - (containerWidth / 2);
+                    break;
+                }
             }
-        }
+
+            targetPosition = Math.max(0, targetPosition);
+
+            container.scrollTo({
+                left: targetPosition,
+                behavior: 'smooth'
+            });
+        }, 50);
     });
+};
+
+watch(currentPage, () => {
+    centerActiveButton();
+});
+
+const debounce = (fn, delay) => {
+    let timer = null;
+    return function (...args) {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+            fn.apply(this, args);
+        }, delay);
+    };
+};
+
+const handleResize = debounce(() => {
+    centerActiveButton();
+}, 100);
+
+onMounted(() => {
+    window.addEventListener('resize', handleResize);
+
+    centerActiveButton();
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', handleResize);
 });
 
 
@@ -333,27 +381,31 @@ function viewArticle(articleId) {
                     </table>
 
                     <div v-if="fuzzyTitleResults.length > 0" class="mt-4 flex justify-center">
-                        <div class="flex join">
-                            <button class="join-item btn" :class="{ 'btn-disabled': currentPage === 1 }"
+                        <div class="flex join pagination-container">
+                            <button class="join-item btn pagination-prev" :class="{ 'btn-disabled': currentPage === 1 }"
                                 @click="currentPage--" :disabled="currentPage === 1">
                                 <ChevronDoubleLeftIcon class="size-4" />
                             </button>
 
-                            <div class="join-item overflow-x-auto max-w-[50vw] flex" style="scrollbar-width: none;">
+                            <div class="join-item overflow-x-auto max-w-[50vw] flex pagination-buttons-container"
+                                style="scrollbar-width: none;">
                                 <div class="join flex">
-                                    <button v-for="page in totalPages" :key="page" class="join-item btn"
+                                    <button v-for="page in totalPages" :key="page"
+                                        class="join-item btn pagination-button"
                                         :class="{ 'btn-active': currentPage === page }" @click="currentPage = page">
                                         {{ page }}
                                     </button>
                                 </div>
                             </div>
 
-                            <button class="join-item btn" :class="{ 'btn-disabled': currentPage === totalPages }"
-                                @click="currentPage++" :disabled="currentPage === totalPages">
+                            <button class="join-item btn pagination-next"
+                                :class="{ 'btn-disabled': currentPage === totalPages }" @click="currentPage++"
+                                :disabled="currentPage === totalPages">
                                 <ChevronDoubleRightIcon class="size-4" />
                             </button>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
