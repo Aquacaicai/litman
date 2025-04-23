@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "bptree",
+    "pivoter",
     "flask>=3.1.0",
     "flask-cors>=5.0.1",
     "lxml>=5.3.1",
@@ -16,12 +17,14 @@ dependencies = [
 ]
 
 [tool.uv.workspace]
-members = ["backend/bptree"]
+members = ["backend/bptree", "backend/pivoter"]
 
 [tool.uv.sources]
 bptree = { workspace = true }
+pivoter = { workspace = true }
 
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.5",
+    "tqdm>=4.67.1",
 ]

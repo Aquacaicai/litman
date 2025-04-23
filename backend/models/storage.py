@@ -1,13 +1,12 @@
 import os
 import pickle
 from typing import List, Dict, Optional, Tuple, Any, Set
-import random
 from bptree import BPTreeIntStr, BPTreeIntVecInt, BPTreeWStrInt, BPTreeWStrVecInt
 from backend.models.article import Article
-from thefuzz import process
-import time
 from backend.utils.xml_parser import extract_keywords_basic
+from pivoter import pivoter
 
+import tqdm
 # 256MB
 MAX_FILE_SIZE = 256 * 1024 * 1024
 
@@ -35,6 +34,26 @@ class LiteratureStorage:
         self._load_indices()
         self.max_article_id = self._get_max_article_id()
         self.current_bin_file = self._get_current_bin_file()
+
+    def build_adjacency_list(self):
+        all_authors = list(self.author_index.getAllKeys())
+        author_to_id = {author: idx for idx, author in enumerate(all_authors)}
+        num_vertices = len(all_authors)
+
+        adjacency_list = [set() for _ in range(num_vertices)]
+
+        for author in tqdm.tqdm(all_authors, desc="building adjacency list"):
+            author_id = author_to_id[author]
+            collaborators = self.get_collaborators_only(author)
+
+            for collaborator in collaborators:
+                if collaborator in author_to_id:
+                    collaborator_id = author_to_id[collaborator]
+
+                    adjacency_list[author_id].add(collaborator_id)
+                    adjacency_list[collaborator_id].add(author_id)
+
+        return adjacency_list
 
     def _load_indices(self):
         main_index_file = os.path.join(self.index_dir, "main_index.dat")
@@ -219,6 +238,17 @@ class LiteratureStorage:
 
         return collaborators
 
+    def get_collaborators_only(self, author: str) -> List[str]:
+        articles = self.get_articles_by_author(author)
+        collaborators = set()
+
+        for article in articles:
+            for coauthor in article.authors:
+                if coauthor != author:
+                    collaborators.add(coauthor)
+
+        return list(collaborators)
+
     def get_coauthor_articles(self, author: str, coauthor: str) -> List[Article]:
         articles = self.get_articles_by_author(author)
         articles = [
@@ -304,29 +334,8 @@ class LiteratureStorage:
 
         return collaboration_graph
 
-    def count_complete_subgraphs(self, graph: Dict[str, Set[str]]) -> Dict[int, int]:
-        # todo: optimize
+    def count_complete_subgraphs(self) -> Dict[int, int]:
+        result = pivoter(self.build_adjacency_list())
+        result = {key: int(value) for key, value in result.items()}
 
-        complete_subgraphs = {2: 0, 3: 0}
-
-        # 2
-        edge_count = 0
-        for author, collaborators in graph.items():
-            edge_count += len(collaborators)
-        # div 2
-        complete_subgraphs[2] = edge_count // 2
-
-        # 3
-        triangle_count = 0
-        authors = list(graph.keys())
-        for i in range(len(authors)):
-            for j in range(i+1, len(authors)):
-                if authors[j] in graph[authors[i]]:  # i-j
-                    for k in range(j+1, len(authors)):
-                        if authors[k] in graph[authors[i]] and authors[k] in graph[authors[j]]:
-                            # -i-j-k
-                            triangle_count += 1
-
-        complete_subgraphs[3] = triangle_count
-
-        return complete_subgraphs
+        return result
