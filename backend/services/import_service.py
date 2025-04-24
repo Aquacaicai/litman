@@ -1,7 +1,7 @@
 from typing import List, Optional
 from backend.models.article import Article
 from backend.models.storage import LiteratureStorage
-from backend.utils.xml_parser import parse_articles_from_xml
+from backend.utils.xml_parser import extract_keywords_basic, parse_articles_from_xml
 
 
 class ImportService:
@@ -30,14 +30,18 @@ class ImportService:
                 title=article_data.get('title', ''),
                 authors=article_data.get('authors', []),
                 year=int(article_data.get('year', 0)),
-                keywords=article_data.get('keywords', []),
-                venue=article_data.get('venue'),
-                abstract=article_data.get('abstract'),
+                editors=article_data.get('editors', []),
+                keywords=extract_keywords_basic(article_data.get('title', '')),
+                ee=article_data.get('ee'),
+                publisher=article_data.get('publisher'),
+                isbn=article_data.get('isbn'),
+                volume=article_data.get('volume'),
+                series=article_data.get('series'),
+                school=article_data.get('school'),
+                journal=article_data.get('journal'),
                 url=article_data.get('url'),
                 pages=article_data.get('pages'),
                 booktitle=article_data.get('booktitle'),
-                ee=article_data.get('ee'),
-                key=article_data.get('key')
             )
 
             return self.storage.add_article(article)

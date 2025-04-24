@@ -36,36 +36,58 @@ def import_manual_article():
     if not data:
         return jsonify({
             'success': False,
-            'message': 'Empty data'
+            'message': 'Empty data received'
         }), 400
 
-    if 'title' not in data or not data['title']:
+    # Validate required fields
+    if 'title' not in data or not data['title'].strip():
         return jsonify({
             'success': False,
-            'message': 'Empty title'
+            'message': 'Title is required'
         }), 400
 
-    if 'authors' not in data or not data['authors']:
+    if 'authors' not in data or not data['authors'] or not isinstance(data['authors'], list):
         return jsonify({
             'success': False,
-            'message': 'Empty authors'
+            'message': 'Authors must be provided as a non-empty list'
         }), 400
+
+    if 'year' in data and data['year']:
+        try:
+            year = int(data['year'])
+            if year <= 0:
+                return jsonify({
+                    'success': False,
+                    'message': 'Year must be a positive integer'
+                }), 400
+        except ValueError:
+            return jsonify({
+                'success': False,
+                'message': 'Year must be a valid integer'
+            }), 400
 
     try:
+        if isinstance(data.get('authors', []), str):
+            data['authors'] = [data['authors']]
+
+        if isinstance(data.get('editors', []), str):
+            data['editors'] = [data['editors']]
+
         article_id = import_service.import_manual_article(data)
+
         if article_id:
             return jsonify({
                 'success': True,
-                'message': 'Import success',
+                'message': 'Article imported successfully',
                 'article_id': article_id
-            })
+            }), 201
         else:
             return jsonify({
                 'success': False,
-                'message': 'Import failed'
+                'message': 'Failed to import article'
             }), 500
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': f'Failed to import: {str(e)}'
+            'message': f'Error importing article: {str(e)}'
         }), 500

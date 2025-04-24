@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import api from '@/api';
 
 // Active tab state
@@ -7,6 +7,31 @@ const activeTab = ref('import');
 
 const fileInput = ref(null);
 const fileContent = ref(null);
+const article = ref({
+    title: '',
+    authors: [],
+    year: null,
+    editors: [],
+    ee: '',
+    publisher: '',
+    isbn: '',
+    volume: '',
+    series: '',
+    school: '',
+    journal: '',
+    url: '',
+    pages: '',
+    booktitle: ''
+});
+
+const authorsInput = ref('');
+const editorsInput = ref('');
+const isFormValid = computed(() => {
+    return article.value.title &&
+        article.value.authors.length > 0 &&
+        article.value.year;
+});
+
 
 function handleFileChange(event) {
     const file = event.target.files[0];
@@ -39,6 +64,56 @@ function handleImportLiteratureClick() {
         });
 }
 
+
+const parseStringToArray = (input, separator = ';') => {
+    if (!input) return [];
+    return input.split(separator)
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+};
+
+const updateArrayFields = () => {
+    article.value.authors = parseStringToArray(authorsInput.value);
+    article.value.editors = parseStringToArray(editorsInput.value);
+};
+async function addLiterature() {
+    updateArrayFields();
+
+    if (!isFormValid.value) {
+        // toast.error("Please fill in all required fields (Title, Authors, Year)");
+        return;
+    }
+
+    try {
+        api.import.importManualArticle(article.value)
+        // toast.success("Literature added successfully!");
+        resetForm();
+    } catch (error) {
+        console.error("Error adding literature:", error);
+        // toast.error("Failed to add literature. Please try again.");
+    }
+};
+function resetForm() {
+    article.value = {
+        title: '',
+        authors: [],
+        year: null,
+        editors: [],
+        ee: '',
+        publisher: '',
+        isbn: '',
+        volume: '',
+        series: '',
+        school: '',
+        journal: '',
+        url: '',
+        pages: '',
+        booktitle: ''
+    };
+
+    authorsInput.value = '';
+    editorsInput.value = '';
+};
 </script>
 
 
@@ -80,76 +155,135 @@ function handleImportLiteratureClick() {
 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text">Paper Title *</span>
+                        <span class="label-text">Title *</span>
                     </label>
-                    <input type="text" placeholder="Enter title" class="input input-bordered" />
+                    <input type="text" placeholder="Enter title" class="input input-bordered" v-model="article.title" />
                 </div>
 
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Authors *</span>
-                        <span class="label-text-alt">Format: Lastname, F.; Lastname, F.</span>
-                    </label>
-                    <input type="text" placeholder="Enter authors" class="input input-bordered" />
+
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Authors *</span>
+                            <span class="label-text-alt">Separated by semicolons (;)</span>
+                        </label>
+                        <input type="text" placeholder="Author1; Author2; Author3" class="input input-bordered"
+                            v-model="authorsInput" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Editors</span>
+                            <span class="label-text-alt">Separated by semicolons (;)</span>
+                        </label>
+                        <input type="text" placeholder="Editor1; Editor2" class="input input-bordered"
+                            v-model="editorsInput" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Year *</span>
+                        </label>
+                        <input type="number" placeholder="YYYY" class="input input-bordered" v-model="article.year" />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Volume</span>
+                        </label>
+                        <input type="text" placeholder="Volume number" class="input input-bordered"
+                            v-model="article.volume" />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Pages</span>
+                        </label>
+                        <input type="text" placeholder="e.g., 123-145" class="input input-bordered"
+                            v-model="article.pages" />
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Year *</span>
+                            <span class="label-text">Journal</span>
                         </label>
-                        <input type="number" placeholder="YYYY" class="input input-bordered" />
+                        <input type="text" placeholder="Journal name" class="input input-bordered"
+                            v-model="article.journal" />
                     </div>
 
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Publication Type</span>
+                            <span class="label-text">Book Title</span>
                         </label>
-                        <select class="select select-bordered w-full">
-                            <option>Journal Article</option>
-                            <option>Conference Paper</option>
-                            <option>Book Chapter</option>
-                            <option>Technical Report</option>
-                            <option>Preprint</option>
-                            <option>Other</option>
-                        </select>
+                        <input type="text" placeholder="For book chapters or proceedings" class="input input-bordered"
+                            v-model="article.booktitle" />
                     </div>
                 </div>
 
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Journal/Conference</span>
-                    </label>
-                    <input type="text" placeholder="Enter publication venue" class="input input-bordered" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Publisher</span>
+                        </label>
+                        <input type="text" placeholder="Publisher name" class="input input-bordered"
+                            v-model="article.publisher" />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">School/Institution</span>
+                        </label>
+                        <input type="text" placeholder="For theses or technical reports" class="input input-bordered"
+                            v-model="article.school" />
+                    </div>
                 </div>
 
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Keywords</span>
-                        <span class="label-text-alt">Comma separated</span>
-                    </label>
-                    <input type="text" placeholder="keyword1, keyword2, keyword3" class="input input-bordered" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Series</span>
+                        </label>
+                        <input type="text" placeholder="Book/conference series" class="input input-bordered"
+                            v-model="article.series" />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">ISBN</span>
+                        </label>
+                        <input type="text" placeholder="ISBN number" class="input input-bordered"
+                            v-model="article.isbn" />
+                    </div>
                 </div>
 
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Abstract</span>
-                    </label>
-                    <textarea class="textarea textarea-bordered h-24" placeholder="Enter abstract"></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">URL</span>
+                        </label>
+                        <input type="url" placeholder="https://example.com/paper" class="input input-bordered"
+                            v-model="article.url" />
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">DOI/Electronic Edition</span>
+                        </label>
+                        <input type="text" placeholder="DOI or electronic reference" class="input input-bordered"
+                            v-model="article.ee" />
+                    </div>
                 </div>
 
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">DOI</span>
-                    </label>
-                    <input type="text" placeholder="e.g., 10.1000/xyz123" class="input input-bordered" />
-                </div>
-
-                <div class="flex justify-end mt-4 gap-2">
-                    <button class="btn btn-ghost">Reset</button>
-                    <button class="btn btn-primary">Add Literature</button>
+                <div class="flex justify-end mt-6 gap-2">
+                    <button class="btn btn-ghost" @click="resetForm">Reset</button>
+                    <button class="btn btn-primary" @click="addLiterature">Add Literature</button>
                 </div>
             </div>
         </div>
+
     </div>
 </template>

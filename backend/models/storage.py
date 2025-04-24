@@ -282,18 +282,20 @@ class LiteratureStorage:
             yearly_keywords[year] = {}
 
         keyword_count = 0
+
         keywords = self.keyword_index.getAllKeys()
-        blacklist = ["based", "of", "the"]
-        keywords = list(
-            filter(lambda word: word not in blacklist, keywords))
         keyword_article_ids = self.keyword_index.getAllValues()
+
+        blacklist = ["based", "of", "the", "using"]
+        filtered_data = [(word, ids) for word, ids in zip(
+            keywords, keyword_article_ids) if word not in blacklist]
 
         article_to_year = {}
         for year, article_ids in zip(years, article_ids_per_year):
             for article_id in article_ids:
                 article_to_year[article_id] = year
 
-        for keyword, article_ids in zip(keywords, keyword_article_ids):
+        for keyword, article_ids in filtered_data:
             keyword_count += 1
             for article_id in article_ids:
                 year = article_to_year.get(article_id)
