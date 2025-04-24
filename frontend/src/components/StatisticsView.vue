@@ -6,8 +6,9 @@ import { useRouter } from 'vue-router';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { BarChart, LineChart } from 'echarts/charts';
-import { GridComponent, TooltipComponent, DataZoomComponent } from 'echarts/components';
+import { GridComponent, TooltipComponent, DataZoomComponent, TitleComponent } from 'echarts/components';
 import VChart from 'vue-echarts';
+import { getDaisyUIColor } from '@/utils/colors';
 
 // Register ECharts components
 use([
@@ -16,7 +17,8 @@ use([
     LineChart,
     GridComponent,
     TooltipComponent,
-    DataZoomComponent
+    DataZoomComponent,
+    TitleComponent
 ]);
 
 const router = useRouter();
@@ -37,13 +39,26 @@ const authorChartOptions = computed(() => {
         .sort((a, b) => a.count - b.count)
 
     return {
+        title: {
+            text: 'Top 100 Authors by Publication Count',
+            left: 'center',
+            textStyle: {
+                color: getDaisyUIColor("nc")
+            }
+        },
         tooltip: {
             trigger: 'axis',
             axisPointer: {
                 type: 'shadow'
+            },
+            backgroundColor: getDaisyUIColor('ac'),
+            borderColor: getDaisyUIColor('ac'),
+            textStyle: {
+                color: getDaisyUIColor('nc')
             }
         },
         grid: {
+            top: '10%',
             left: '3%',
             right: '4%',
             bottom: '3%',
@@ -80,7 +95,7 @@ const authorChartOptions = computed(() => {
                 type: 'bar',
                 data: topAuthors.map(a => a.count),
                 itemStyle: {
-                    color: '#3b82f6'
+                    color: getDaisyUIColor("p")
                 }
             }
         ]
@@ -217,8 +232,45 @@ const keywordTrendChartOptions = computed(() => {
     });
 
     return {
+        title: {
+            text: 'Keyword Trend Over Time',
+            left: 'center',
+            textStyle: {
+                color: getDaisyUIColor("nc")
+            }
+        },
         tooltip: {
             trigger: 'axis',
+            backgroundColor: getDaisyUIColor('ac'),
+            borderColor: getDaisyUIColor('ac'),
+            textStyle: {
+                color: getDaisyUIColor('nc')
+            },
+            formatter: function (params) {
+                const axisValue = params[0].axisValueLabel || params[0].name;
+
+                let html = '<div style="font-weight: bold; margin-bottom: 5px;">' + axisValue + '</div>';
+
+                html += '<table style="width: 100%; border-spacing: 0; border-collapse: collapse;">';
+
+                params.forEach(param => {
+                    const formattedValue = (param.value * 100).toFixed(2).toString() + "%";
+
+                    html += '<tr>' +
+                        '<td style="padding: 3px; text-align: left;">' +
+                        param.marker + ' ' + param.seriesName +
+                        '</td>' +
+                        '<td style="padding: 3px; text-align: right; font-weight: bold;">' +
+                        formattedValue +
+                        '</td>' +
+                        '</tr>';
+                });
+
+                html += '</table>';
+
+                return html;
+            }
+
         },
         legend: {
             data: topKeywords,
@@ -270,12 +322,11 @@ watch(activeTab, (newValue, oldValue) => {
             <div class="card-body">
                 <h2 class="card-title">Publications by Author</h2>
 
-
                 <div v-if="isLoading" class="flex justify-center my-4">
                     <span class="loading loading-spinner loading-lg"></span>
                 </div>
 
-                <div v-else-if="authorStats">
+                <div v-else-if="authorStats" class="space-y-4">
                     <div class="form-control mb-4 h-12">
                         <input type="text" placeholder="Filter authors" v-model="authorFilter"
                             class="input input-bordered flex-1" />
@@ -410,16 +461,15 @@ watch(activeTab, (newValue, oldValue) => {
                             </tr>
                         </tbody>
                     </table>
-                </div>
 
-                <!-- Keyword trend chart -->
-                <div v-if="keywordsStats && Object.keys(keywordsStats).length > 0" class="w-full h-80 mt-6">
-                    <h3 class="text-lg font-semibold mb-2">Keyword Trend Over Time</h3>
-                    <v-chart class="w-full h-full" :option="keywordTrendChartOptions" autoresize />
-                </div>
-                <div v-else class="w-full h-80 bg-base-200 mt-6 flex items-center justify-center">
-                    <div class="text-center">
-                        <p class="text-lg mb-2">No keyword data available</p>
+                    <!-- Keyword trend chart -->
+                    <div v-if="keywordsStats && Object.keys(keywordsStats).length > 0" class="w-full h-80 mt-6">
+                        <v-chart class="w-full h-full" :option="keywordTrendChartOptions" autoresize />
+                    </div>
+                    <div v-else class="w-full h-80 bg-base-200 mt-6 flex items-center justify-center">
+                        <div class="text-center">
+                            <p class="text-lg mb-2">No keyword data available</p>
+                        </div>
                     </div>
                 </div>
             </div>
