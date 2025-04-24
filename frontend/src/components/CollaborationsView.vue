@@ -33,9 +33,9 @@ const collaborationCliques = ref(null);
 const statsContainerRef = ref(null);
 const isLoadingCollabNet = ref(false);
 const isLoadingCollabArticles = ref(false);
-const currentStep = ref(1); // 1: Initialize, 2: Build Adjacency, 3: Pivoter, 4: Complete
-const buildProgress = ref(0.0);
-const isAnalyzing = ref(false);
+const CliqueStep = ref(1); // 1: Initialize, 2: Build Adjacency, 3: Pivoter, 4: Complete
+const CliqueProgress = ref(0.0);
+const isRunningClique = ref(false);
 let eventSource = null;
 
 onMounted(() => {
@@ -340,9 +340,9 @@ function viewArticle(articleId) {
 }
 
 async function loadCollaborationCliques() {
-    isAnalyzing.value = true;
-    currentStep.value = 1;
-    buildProgress.value = 0;
+    isRunningClique.value = true;
+    CliqueStep.value = 1;
+    CliqueProgress.value = 0;
     collaborationCliques.value = null;
 
     if (eventSource) {
@@ -354,30 +354,28 @@ async function loadCollaborationCliques() {
     eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        console.log(data)
-
         if (data.status === 'build_adjacency_list') {
             if (data.progress > 98) {
-                currentStep.value = 3;
+                CliqueStep.value = 3;
             } else {
-                currentStep.value = 2;
-                buildProgress.value = data.progress;
+                CliqueStep.value = 2;
+                CliqueProgress.value = data.progress;
             }
         }
         else if (data.status === 'pivoter') {
-            currentStep.value = 3;
+            CliqueStep.value = 3;
         }
         else if (data.status === 'done') {
-            currentStep.value = 4;
+            CliqueStep.value = 4;
             collaborationCliques.value = data.data;
-            isAnalyzing.value = false;
+            isRunningClique.value = false;
             eventSource.close();
         }
     };
 
     eventSource.onerror = (error) => {
         console.error('SSE Error:', error);
-        isAnalyzing.value = false;
+        isRunningClique.value = false;
         if (eventSource) {
             eventSource.close();
         }
@@ -502,16 +500,16 @@ watch(activeTab, (newValue, oldValue) => {
 
                 <!-- Progress Steps -->
                 <ul class="steps w-full mb-6">
-                    <li class="step" :class="{ 'step-primary': currentStep >= 1 }">
+                    <li class="step" :class="{ 'step-primary': CliqueStep >= 1 }">
                         Initialize
                     </li>
-                    <li class="step" :class="{ 'step-primary': currentStep >= 2 }">
+                    <li class="step" :class="{ 'step-primary': CliqueStep >= 2 }">
                         Build Adjacency List
                     </li>
-                    <li class="step" :class="{ 'step-primary': currentStep >= 3 }">
+                    <li class="step" :class="{ 'step-primary': CliqueStep >= 3 }">
                         Run Pivoter Algorithm
                     </li>
-                    <li class="step" :class="{ 'step-primary': currentStep >= 4 }">
+                    <li class="step" :class="{ 'step-primary': CliqueStep >= 4 }">
                         Complete
                     </li>
                 </ul>
@@ -519,33 +517,38 @@ watch(activeTab, (newValue, oldValue) => {
                 <!-- Progress Indicators -->
                 <div class="grid gap-4">
                     <!-- Building Adjacency List Progress -->
-                    <div v-if="currentStep === 2" class="w-full">
+                    <div v-if="CliqueStep === 2" class="w-full">
                         <div class="flex justify-between mb-1">
                             <span class="text-sm font-medium">Building Adjacency List</span>
-                            <span class="text-sm font-medium">{{ Math.round(buildProgress) }}%</span>
+                            <span class="text-sm font-medium">{{ Math.round(CliqueProgress) }}%</span>
                         </div>
-                        <progress class="progress progress-primary w-full" :value="buildProgress" max="100"></progress>
+                        <progress class="progress progress-primary w-full" :value="CliqueProgress" max="100"></progress>
                     </div>
 
                     <!-- Progress -->
-                    <div v-if="currentStep === 3 || currentStep === 1" class="flex items-center justify-center gap-3">
+                    <div v-if="CliqueStep === 3 || CliqueStep === 1" class="flex items-center justify-center gap-3">
                         <span class="text-sm font-medium">{{
-                            [null, "Initializing", null, "Running Pivoter Algorithm"].at(currentStep)
+                            [null, "Initializing", null, "Running Pivoter Algorithm"].at(CliqueStep)
                             }}</span>
                         <span class="loading loading-spinner text-primary"></span>
                     </div>
                 </div>
 
-                <div class="stats shadow mb-6" ref="statsContainerRef">
-                    <div v-for="cliqueinfo in collaborationCliques" class="stat">
-                        <div class="stat-title">{{ cliqueinfo.order }}-Cliques</div>
-                        <div class="stat-value" v-html="formatLargeNumber(cliqueinfo.count)"></div>
+                <div v-if="!isRunningClique && collaborationCliques">
+                    <div class="overflow-x-auto pb-2" ref="statsContainerRef">
+                        <div class="stats shadow mb-6 flex flex-nowrap min-w-max">
+                            <div v-for="cliqueinfo in collaborationCliques" class="stat">
+                                <div class="stat-title">{{ cliqueinfo.order }}-Cliques</div>
+                                <div class="stat-value" v-html="formatLargeNumber(cliqueinfo.count)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-80">
+                        <v-chart class="w-full h-full" :option="cliqueChartOptions" autoresize />
                     </div>
                 </div>
 
-                <div class="w-full h-80">
-                    <v-chart class="w-full h-full" :option="cliqueChartOptions" autoresize />
-                </div>
             </div>
         </div>
     </div>
