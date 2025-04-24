@@ -6,6 +6,7 @@ from backend.models.article import Article
 from backend.utils.xml_parser import extract_keywords_basic
 from pivoter import pivoter
 from functools import lru_cache
+from cachetools import cached
 
 import tqdm
 # 256MB
@@ -100,7 +101,7 @@ class LiteratureStorage:
         return file_path
 
     def _clear_cache(self) -> None:
-        self.count_complete_subgraphs_with_progress.cache_clear()
+        self.count_complete_subgraphs_with_progress.cache.clear()
         self.get_yearly_keyword_frequencies.cache_clear()
         self.get_author_article_counts.cache_clear()
 
@@ -282,6 +283,9 @@ class LiteratureStorage:
 
         keyword_count = 0
         keywords = self.keyword_index.getAllKeys()
+        blacklist = ["based", "of", "the"]
+        keywords = list(
+            filter(lambda word: word not in blacklist, keywords))
         keyword_article_ids = self.keyword_index.getAllValues()
 
         article_to_year = {}
@@ -307,7 +311,7 @@ class LiteratureStorage:
 
         return yearly_keywords
 
-    @lru_cache(maxsize=None)
+    @cached(cache={}, key=lambda *args, **kwargs: 1)
     def count_complete_subgraphs_with_progress(self, progress_callback=None):
         adjacency_list = self.build_adjacency_list_with_progress(
             progress_callback)
