@@ -5,6 +5,7 @@ from bptree import BPTreeIntStr, BPTreeIntVecInt, BPTreeWStrInt, BPTreeWStrVecIn
 from backend.models.article import Article
 from backend.utils.xml_parser import extract_keywords_basic
 from pivoter import pivoter
+from functools import lru_cache
 
 import tqdm
 # 256MB
@@ -118,6 +119,11 @@ class LiteratureStorage:
 
         return file_path
 
+    def _clear_cache(self) -> None:
+        self.count_complete_subgraphs.cache_clear()
+        self.get_yearly_keyword_frequencies.cache_clear()
+        self.get_author_article_counts.cache_clear()
+
     def add_article(self, article: Article, save_immediately=True) -> int:
         if article.article_id is None:
             self.max_article_id += 1
@@ -186,6 +192,7 @@ class LiteratureStorage:
 
         if save_immediately:
             self._save_indices()
+            self._clear_cache()
 
         return article.article_id
 
@@ -267,6 +274,7 @@ class LiteratureStorage:
         matched_articles = [self.get_article_by_id(id) for id in result_set]
         return matched_articles
 
+    @lru_cache(maxsize=None)
     def get_author_article_counts(self) -> Dict[str, int]:
         author_counts = {}
 
@@ -279,6 +287,7 @@ class LiteratureStorage:
 
         return author_counts
 
+    @lru_cache(maxsize=None)
     def get_yearly_keyword_frequencies(self) -> Dict[int, Dict[str, float]]:
         yearly_keywords = {}
         yearly_total_articles = {}
@@ -334,6 +343,7 @@ class LiteratureStorage:
 
         return collaboration_graph
 
+    @lru_cache(maxsize=None)
     def count_complete_subgraphs(self) -> Dict[int, int]:
         result = pivoter(self.build_adjacency_list())
         result = {key: int(value) for key, value in result.items()}

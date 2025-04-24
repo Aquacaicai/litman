@@ -1,6 +1,5 @@
 from typing import List, Dict, Tuple, Set
 from backend.models.storage import LiteratureStorage
-import functools
 
 
 class StatsService:
@@ -24,6 +23,5 @@ class StatsService:
     def get_collaboration_network(self) -> Dict[str, Set[str]]:
         return self.storage.get_collaboration_graph()
 
-    @functools.lru_cache(maxsize=None)
     def count_complete_subgraphs(self) -> Dict[int, int]:
         return self.storage.count_complete_subgraphs()

@@ -19,6 +19,7 @@ class ImportService:
                 imported_count += 1
 
         self.storage._save_indices()
+        self.storage._clear_cache()
 
         return imported_count
 
