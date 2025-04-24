@@ -1,30 +1,39 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
 import api from '@/api';
 import { useRouter, useRoute } from 'vue-router';
-import * as echarts from 'echarts';
+import VChart from 'vue-echarts';
+import { GraphChart, BarChart } from 'echarts/charts';
+import { GridComponent, TooltipComponent, DataZoomComponent, LegendComponent, TitleComponent } from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
+import { use } from 'echarts/core';
+import { getDaisyUIColor } from '@/utils/colors';
 const router = useRouter();
 const route = useRoute();
 
+use([
+    BarChart,
+    CanvasRenderer,
+    GraphChart,
+    GridComponent,
+    TooltipComponent,
+    DataZoomComponent,
+    LegendComponent,
+    TitleComponent
+]);
+
+
 const activeTab = ref('networkGraph');
 const authorName = ref('');
-const collaboratorChart = ref(null);
-const collaborators = ref({});
+const collaborators = ref(null);
 const selectedLink = ref(null);
 const selectedAuthor = ref(null);
 const coauthoredArticles = ref([]);
+const collaborationCliques = ref(null);
+const statsContainerRef = ref(null);
 const isLoading = ref(false);
 
 onMounted(() => {
-    const chartContainer = document.getElementById('collaborationNetwork');
-    if (chartContainer) {
-        collaboratorChart.value = echarts.init(chartContainer);
-
-        window.addEventListener('resize', () => {
-            collaboratorChart.value.resize();
-        });
-    }
-
     if (route.query.tab) {
         activeTab.value = route.query.tab;
     }
@@ -46,34 +55,120 @@ watch(() => route.query.author, (newAuthor) => {
         loadCollaborationNetwork();
     }
 });
-onUnmounted(() => {
-    if (collaboratorChart.value) {
-        window.removeEventListener('resize', collaboratorChart.value.resize())
-        collaboratorChart.value.dispose();
+
+watch(collaborationCliques, (newVal) => {
+    if (newVal && newVal.length) {
+        nextTick(() => {
+            if (statsContainerRef.value) {
+                statsContainerRef.value.scrollLeft = statsContainerRef.value.scrollWidth;
+            }
+        });
     }
+}, { immediate: true });
+
+const cliqueChartOptions = computed(() => {
+    if (!collaborationCliques.value) return { series: [] };
+
+    const cliques = collaborationCliques.value;
+
+    return {
+        title: {
+            text: `Count of Collaboration Cliques of Different Sizes`,
+            left: 'center',
+            textStyle: {
+                color: getDaisyUIColor("nc")
+            },
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: cliques.map(a => a.order),
+            axisLabel: {
+                width: 120,
+                overflow: 'truncate'
+            }
+        },
+        yAxis: {
+            type: 'value',
+            boundaryGap: [0, 0.01],
+            axisLabel: {
+                formatter: function (value) {
+                    if (Math.abs(value) >= 1e5) {
+                        return value.toExponential(2);
+                    }
+                    return value.toFixed(2);
+                }
+            }
+        },
+        dataZoom: [
+            {
+                type: 'slider',
+                xAxisIndex: 0,
+                start: 0,
+                end: collaborationCliques.value.length
+            },
+            {
+                type: 'inside',
+                xAxisIndex: 0,
+                zoomOnMouseWheel: true,
+            }
+        ],
+        series: [
+            {
+                name: 'Cliques',
+                type: 'bar',
+                data: cliques.map(a => a.count),
+                itemStyle: {
+                    color: getDaisyUIColor('p')
+                }
+            }
+        ],
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+            backgroundColor: getDaisyUIColor('ac'),
+            borderColor: getDaisyUIColor('ac'),
+            textStyle: {
+                color: getDaisyUIColor('nc')
+            }
+        },
+
+    };
 });
 
 async function loadCollaborationNetwork() {
-    console.log('Loading collaboration network for author:', authorName.value);
     if (!authorName.value) return;
 
     isLoading.value = true;
     try {
         const result = await api.author.getAuthorCollaborators(authorName.value);
-        collaborators.value = result.data;
         selectedAuthor.value = authorName.value;
-        renderCollaborationNetwork();
+        collaborators.value = result.data;
     } catch (error) {
         console.error('Error fetching author collaborators:', error);
     } finally {
         isLoading.value = false;
     }
 }
-function renderCollaborationNetwork() {
-    if (!collaboratorChart.value || !collaborators.value) return;
+
+const collaborationNetworkChartOptions = computed(() => {
+    if (!collaborators.value) return {};
 
     // Prepare nodes and links for the graph
-    const nodes = [{ id: selectedAuthor.value, name: selectedAuthor.value, symbolSize: 30, category: 0 }];
+    const nodes = [{
+        id: selectedAuthor.value,
+        name: selectedAuthor.value, symbolSize: 30, category: 0,
+        itemStyle: {
+            color: getDaisyUIColor("p")
+        }
+    }];
     const links = [];
 
     Object.entries(collaborators.value).forEach(([coauthor, count]) => {
@@ -82,7 +177,10 @@ function renderCollaborationNetwork() {
             id: coauthor,
             name: coauthor,
             symbolSize: 10 + Math.min(count * 2, 20), // Size based on collaboration count
-            category: 1
+            category: 1,
+            itemStyle: {
+                color: getDaisyUIColor("a")
+            }
         });
 
         // Add link between main author and collaborator
@@ -91,16 +189,19 @@ function renderCollaborationNetwork() {
             target: coauthor,
             value: count,
             lineStyle: {
-                width: 1 + Math.min(count, 5) // Width based on collaboration count
-            }
+                width: 1 + Math.min(count, 5),// Width based on collaboration count
+                color: getDaisyUIColor("nc")
+            },
         });
     });
 
-    const option = {
+    return {
         title: {
             text: `Collaboration Network for ${selectedAuthor.value}`,
-            top: 'top',
-            left: 'center'
+            left: 'center',
+            textStyle: {
+                color: getDaisyUIColor("nc")
+            },
         },
         tooltip: {
             formatter: function (params) {
@@ -114,7 +215,10 @@ function renderCollaborationNetwork() {
         legend: [
             {
                 data: ['Main Author', 'Collaborator'],
-                bottom: 0
+                bottom: 0,
+                textStyle: {
+                    color: getDaisyUIColor("nc")
+                },
             }
         ],
         series: [{
@@ -124,8 +228,18 @@ function renderCollaborationNetwork() {
             data: nodes,
             links: links,
             categories: [
-                { name: 'Main Author' },
-                { name: 'Collaborator' }
+                {
+                    name: 'Main Author',
+                    itemStyle: {
+                        color: getDaisyUIColor("p")
+                    }
+                },
+                {
+                    name: 'Collaborator',
+                    itemStyle: {
+                        color: getDaisyUIColor("a")
+                    }
+                }
             ],
             roam: true,
             label: {
@@ -144,39 +258,37 @@ function renderCollaborationNetwork() {
             }
         }]
     };
+})
 
-    collaboratorChart.value.setOption(option);
+function handleCollaborationNetworkChartClick(params) {
+    if (params.dataType === 'edge') {
+        const source = params.data.source;
+        const target = params.data.target;
 
-    collaboratorChart.value.on('click', function (params) {
-        if (params.dataType === 'edge') {
-            const source = params.data.source;
-            const target = params.data.target;
-
-            let author, coauthor;
-            if (source === selectedAuthor.value) {
-                author = source;
-                coauthor = target;
-            } else {
-                author = target;
-                coauthor = source;
-            }
-
-            selectedLink.value = { author, coauthor };
-            fetchCoauthoredArticles(author, coauthor);
-        } else if (params.dataType === 'node') {
-            if (params.data.id !== selectedAuthor.value) {
-                router.push({
-                    name: 'Collaborations',
-                    query: {
-                        tab: 'networkGraph',
-                        author: params.data.id
-                    }
-                });
-                console.log('Navigating to author:', params.data.id);
-            }
+        let author, coauthor;
+        if (source === selectedAuthor.value) {
+            author = source;
+            coauthor = target;
+        } else {
+            author = target;
+            coauthor = source;
         }
-    });
+
+        selectedLink.value = { author, coauthor };
+        fetchCoauthoredArticles(author, coauthor);
+    } else if (params.dataType === 'node') {
+        if (params.data.id !== selectedAuthor.value) {
+            router.push({
+                name: 'Collaborations',
+                query: {
+                    tab: 'networkGraph',
+                    author: params.data.id
+                }
+            });
+        }
+    }
 }
+
 
 async function fetchCoauthoredArticles(author, coauthor) {
     isLoading.value = true;
@@ -208,14 +320,57 @@ function viewArticle(articleId) {
         queryParams.coauthor = selectedLink.value.coauthor;
     }
 
-    console.log(queryParams)
-
     router.push({
         name: 'ArticleDetail',
         params: { id: articleId },
         query: queryParams
     });
 }
+
+async function loadCollaborationCliques() {
+    isLoading.value = true;
+    try {
+        const result = await api.stats.getCompleteSubgraphs()
+        collaborationCliques.value = result.data;
+    } catch (error) {
+        console.error('Error fetching coauthored articles:', error);
+        collaborationCliques.value = [];
+    } finally {
+        isLoading.value = false;
+    }
+}
+
+function formatLargeNumber(value) {
+    if (!value) return '0';
+
+    const threshold = 10000;
+
+    if (Math.abs(value) < threshold) {
+        return value.toString();
+    } else {
+        const exp = Math.floor(Math.log10(Math.abs(value)));
+        const mantissa = value / Math.pow(10, exp);
+        const formattedMantissa = mantissa.toFixed(2);
+        const trimmedMantissa = formattedMantissa.replace(/\.?0+$/, '');
+
+        const superscript = exp.toString().split('').map(digit => {
+            const superscriptMap = {
+                '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+                '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+                '-': '⁻'
+            };
+            return superscriptMap[digit] || digit;
+        }).join('');
+        return `${trimmedMantissa} × 10${superscript}`;
+    }
+}
+watch(activeTab, (newValue, oldValue) => {
+    if (newValue === 'networkGraph') {
+    } else if (newValue === 'cliques') {
+        loadCollaborationCliques();
+    }
+}, { immediate: true });
+
 </script>
 
 <template>
@@ -241,11 +396,14 @@ function viewArticle(articleId) {
                         </button>
                     </div>
                 </div>
-                <!-- Network visualization -->
-                <div id="collaborationNetwork" class="w-full h-96 bg-base-200"></div>
                 <!-- Loading indicator -->
                 <div v-if="isLoading" class="flex justify-center my-4">
                     <span class="loading loading-spinner loading-lg"></span>
+                </div>
+                <!-- Network visualization -->
+                <div v-else-if="collaborators" class="w-full h-96">
+                    <v-chart class="w-full h-full" :option="collaborationNetworkChartOptions"
+                        @click="handleCollaborationNetworkChartClick" autoresize />
                 </div>
                 <!-- Coauthored articles table -->
                 <div v-if="selectedLink && coauthoredArticles.length > 0" class="mt-6">
@@ -294,105 +452,15 @@ function viewArticle(articleId) {
                     group.
                 </p>
 
-                <div class="stats shadow mb-6">
-                    <div class="stat">
-                        <div class="stat-title">2-Cliques</div>
-                        <div class="stat-value">467</div>
-                        <div class="stat-desc">Simple collaborations</div>
-                    </div>
-
-                    <div class="stat">
-                        <div class="stat-title">3-Cliques</div>
-                        <div class="stat-value">178</div>
-                        <div class="stat-desc">Triangles</div>
-                    </div>
-
-                    <div class="stat">
-                        <div class="stat-title">4-Cliques</div>
-                        <div class="stat-value">53</div>
-                        <div class="stat-desc">Tetrahedrons</div>
-                    </div>
-
-                    <div class="stat">
-                        <div class="stat-title">5-Cliques</div>
-                        <div class="stat-value">14</div>
-                    </div>
-
-                    <div class="stat">
-                        <div class="stat-title">6-Cliques</div>
-                        <div class="stat-value">3</div>
+                <div class="stats shadow mb-6" ref="statsContainerRef">
+                    <div v-for="cliqueinfo in collaborationCliques" class="stat">
+                        <div class="stat-title">{{ cliqueinfo.order }}-Cliques</div>
+                        <div class="stat-value" v-html="formatLargeNumber(cliqueinfo.count)"></div>
                     </div>
                 </div>
 
-                <!-- Clique visualization placeholder -->
-                <div class="w-full h-80 bg-base-200 flex items-center justify-center">
-                    <div class="text-center">
-                        <p class="text-lg mb-2">Clique Distribution Visualization</p>
-                        <p class="text-sm opacity-70">(Bar chart visualization would be rendered here)</p>
-                    </div>
-                </div>
-
-                <div class="divider">Largest Cliques</div>
-
-                <div class="overflow-x-auto">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Clique Size</th>
-                                <th>Authors</th>
-                                <th>Joint Papers</th>
-                                <th>Years Active</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>6</td>
-                                <td>Authors A, B, C, D, E, F</td>
-                                <td>12</td>
-                                <td>2018-2023</td>
-                                <td>
-                                    <button class="btn btn-xs btn-ghost">View Details</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>6</td>
-                                <td>Authors G, H, I, J, K, L</td>
-                                <td>8</td>
-                                <td>2019-2022</td>
-                                <td>
-                                    <button class="btn btn-xs btn-ghost">View Details</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>6</td>
-                                <td>Authors M, N, O, P, Q, R</td>
-                                <td>7</td>
-                                <td>2017-2023</td>
-                                <td>
-                                    <button class="btn btn-xs btn-ghost">View Details</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>5</td>
-                                <td>Authors S, T, U, V, W</td>
-                                <td>15</td>
-                                <td>2016-2023</td>
-                                <td>
-                                    <button class="btn btn-xs btn-ghost">View Details</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>5</td>
-                                <td>Authors X, Y, Z, A1, B1</td>
-                                <td>11</td>
-                                <td>2020-2023</td>
-                                <td>
-                                    <button class="btn btn-xs btn-ghost">View Details</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="w-full h-80">
+                    <v-chart class="w-full h-full" :option="cliqueChartOptions" autoresize />
                 </div>
             </div>
         </div>
