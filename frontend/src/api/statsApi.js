@@ -15,23 +15,9 @@ export function getYearlyKeywordFrequencies() {
     });
 }
 
-export function getCollaborationNetwork() {
-    return request({
-        url: '/stats/collaboration/network',
-        method: 'get'
-    });
-}
-
 export function getCompleteSubgraphs() {
     return request({
         url: '/stats/collaboration/complete-subgraphs',
-        method: 'get'
-    });
-}
-
-export function getCollaborationGraphData() {
-    return request({
-        url: '/stats/visualization/collaboration-graph',
         method: 'get'
     });
 }

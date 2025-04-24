@@ -2,6 +2,9 @@ from flask import jsonify, request
 from backend.api import api_bp
 from backend.services.stats_service import StatsService
 from backend.config import storage
+from flask import Response, stream_with_context
+import json
+import time
 
 stats_service = StatsService(storage)
 
@@ -35,71 +38,70 @@ def get_yearly_keyword_frequencies():
     })
 
 
-@api_bp.route('/stats/collaboration/network', methods=['GET'])
-def get_collaboration_network():
-    network = stats_service.get_collaboration_network()
-
-    # to json
-    formatted_network = []
-    for author, collaborators in network.items():
-        formatted_network.append({
-            'author': author,
-            'collaborators': list(collaborators)
-        })
-
-    return jsonify({
-        'success': True,
-        'data': formatted_network
-    })
-
-
 @api_bp.route('/stats/collaboration/complete-subgraphs', methods=['GET'])
 def get_complete_subgraphs():
-    subgraphs = stats_service.count_complete_subgraphs()
-
-    formatted_data = [{'order': order, 'count': count}
-                      for order, count in subgraphs.items()]
-
-    return jsonify({
-        'success': True,
-        'data': formatted_data
-    })
+    return Response(stream_with_context(generate_complete_subgraphs()),
+                    content_type='text/event-stream')
 
 
-@api_bp.route('/stats/visualization/collaboration-graph', methods=['GET'])
-def get_visualization_data():
-    network = stats_service.get_collaboration_network()
+def generate_complete_subgraphs():
+    yield f"data: {json.dumps({'status': 'started', 'progress': 0})}\n\n"
 
-    nodes = []
-    links = []
-    author_ids = {}  # autoor name -> node id
+    try:
+        class ProgressState:
+            def __init__(self):
+                self.current_message = None
+                self.message_available = False
 
-    # nodes
-    for i, author in enumerate(network.keys()):
-        author_ids[author] = i
-        nodes.append({
-            'id': i,
-            'name': author,
-            'article_count': len(storage.get_articles_by_author(author))
-        })
+            def set_message(self, status, current, total):
+                progress = (current / total) * 100 if total > 0 else 0
+                self.current_message = f"data: {json.dumps({'status': status, 'progress': progress})}\n\n"
+                self.message_available = True
 
-    # edges
-    for author, collaborators in network.items():
-        source_id = author_ids[author]
-        for collaborator in collaborators:
-            if collaborator in author_ids:
-                target_id = author_ids[collaborator]
-                # dup edge
-                if source_id < target_id:
-                    links.append({
-                        'source': source_id,
-                        'target': target_id
-                    })
+            def get_message(self):
+                if self.message_available:
+                    self.message_available = False
+                    return self.current_message
+                return None
 
-    return jsonify({
-        'success': True,
-        'data': {
-            'nodes': nodes,
-            'links': links
-        }
-    })
+        progress_state = ProgressState()
+
+        def progress_callback(status, current, total):
+            progress_state.set_message(status, current, total)
+
+        import threading
+        result = {'data': None}
+
+        def processing_thread():
+            try:
+                result['data'] = stats_service.count_complete_subgraphs_with_progress(
+                    progress_callback)
+            except Exception as e:
+                progress_state.set_message('error', 0, 0)
+                print(f"Error in processing thread: {e}")
+
+        thread = threading.Thread(target=processing_thread)
+        thread.daemon = True
+        thread.start()
+
+        while thread.is_alive():
+            message = progress_state.get_message()
+            if message:
+                yield message
+            import time
+            time.sleep(1)
+
+        message = progress_state.get_message()
+        if message:
+            yield message
+
+        if result['data']:
+            subgraphs = result['data']
+            formatted_data = [{'order': order, 'count': count}
+                              for order, count in subgraphs.items()]
+            yield f"data: {json.dumps({'status': 'done', 'data': formatted_data})}\n\n"
+        else:
+            yield f"data: {json.dumps({'status': 'error', 'data': 'Processing failed'})}\n\n"
+
+    except Exception as e:
+        yield f"data: {json.dumps({'status': 'error', 'data': str(e)})}\n\n"

@@ -20,8 +20,5 @@ class StatsService:
 
         return result
 
-    def get_collaboration_network(self) -> Dict[str, Set[str]]:
-        return self.storage.get_collaboration_graph()
-
-    def count_complete_subgraphs(self) -> Dict[int, int]:
-        return self.storage.count_complete_subgraphs()
+    def count_complete_subgraphs_with_progress(self, progress_callback=None):
+        return self.storage.count_complete_subgraphs_with_progress(progress_callback)

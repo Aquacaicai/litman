@@ -36,26 +36,6 @@ class LiteratureStorage:
         self.max_article_id = self._get_max_article_id()
         self.current_bin_file = self._get_current_bin_file()
 
-    def build_adjacency_list(self):
-        all_authors = list(self.author_index.getAllKeys())
-        author_to_id = {author: idx for idx, author in enumerate(all_authors)}
-        num_vertices = len(all_authors)
-
-        adjacency_list = [set() for _ in range(num_vertices)]
-
-        for author in tqdm.tqdm(all_authors, desc="building adjacency list"):
-            author_id = author_to_id[author]
-            collaborators = self.get_collaborators_only(author)
-
-            for collaborator in collaborators:
-                if collaborator in author_to_id:
-                    collaborator_id = author_to_id[collaborator]
-
-                    adjacency_list[author_id].add(collaborator_id)
-                    adjacency_list[collaborator_id].add(author_id)
-
-        return adjacency_list
-
     def _load_indices(self):
         main_index_file = os.path.join(self.index_dir, "main_index.dat")
         author_index_file = os.path.join(self.index_dir, "author_index.dat")
@@ -120,7 +100,7 @@ class LiteratureStorage:
         return file_path
 
     def _clear_cache(self) -> None:
-        self.count_complete_subgraphs.cache_clear()
+        self.count_complete_subgraphs_with_progress.cache_clear()
         self.get_yearly_keyword_frequencies.cache_clear()
         self.get_author_article_counts.cache_clear()
 
@@ -327,25 +307,44 @@ class LiteratureStorage:
 
         return yearly_keywords
 
-    def get_collaboration_graph(self) -> Dict[str, Set[str]]:
-        collaboration_graph = {}
-
-        for article_id in range(1, self.max_article_id + 1):
-            article = self.get_article_by_id(article_id)
-            if article and len(article.authors) > 1:
-                for author in article.authors:
-                    if author not in collaboration_graph:
-                        collaboration_graph[author] = set()
-
-                    for coauthor in article.authors:
-                        if coauthor != author:
-                            collaboration_graph[author].add(coauthor)
-
-        return collaboration_graph
-
     @lru_cache(maxsize=None)
-    def count_complete_subgraphs(self) -> Dict[int, int]:
-        result = pivoter(self.build_adjacency_list())
+    def count_complete_subgraphs_with_progress(self, progress_callback=None):
+        adjacency_list = self.build_adjacency_list_with_progress(
+            progress_callback)
+
+        if progress_callback:
+            progress_callback("pivoter", 0, 100)
+
+        result = pivoter(adjacency_list)
+
+        if progress_callback:
+            progress_callback("pivoter", 100, 100)
+
         result = {key: int(value) for key, value in result.items()}
 
         return result
+
+    def build_adjacency_list_with_progress(self, progress_callback=None):
+        all_authors = list(self.author_index.getAllKeys())
+        author_to_id = {author: idx for idx, author in enumerate(all_authors)}
+        num_vertices = len(all_authors)
+
+        adjacency_list = [set() for _ in range(num_vertices)]
+
+        total_authors = len(all_authors)
+        for idx, author in enumerate(all_authors):
+            author_id = author_to_id[author]
+            collaborators = self.get_collaborators_only(author)
+
+            for collaborator in collaborators:
+                if collaborator in author_to_id:
+                    collaborator_id = author_to_id[collaborator]
+
+                    adjacency_list[author_id].add(collaborator_id)
+                    adjacency_list[collaborator_id].add(author_id)
+
+            if progress_callback and (idx % 1000 == 0 or idx == total_authors - 1):
+                progress_callback("build_adjacency_list",
+                                  idx + 1, total_authors)
+
+        return adjacency_list

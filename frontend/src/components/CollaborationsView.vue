@@ -33,6 +33,10 @@ const collaborationCliques = ref(null);
 const statsContainerRef = ref(null);
 const isLoadingCollabNet = ref(false);
 const isLoadingCollabArticles = ref(false);
+const currentStep = ref(1); // 1: Initialize, 2: Build Adjacency, 3: Pivoter, 4: Complete
+const buildProgress = ref(0.0);
+const isAnalyzing = ref(false);
+let eventSource = null;
 
 onMounted(() => {
     if (route.query.tab) {
@@ -336,15 +340,47 @@ function viewArticle(articleId) {
 }
 
 async function loadCollaborationCliques() {
-    isLoading.value = true;
-    try {
-        const result = await api.stats.getCompleteSubgraphs()
-        collaborationCliques.value = result.data;
-    } catch (error) {
-        console.error('Error fetching coauthored articles:', error);
-        collaborationCliques.value = [];
-    } finally {
-        isLoading.value = false;
+    isAnalyzing.value = true;
+    currentStep.value = 1;
+    buildProgress.value = 0;
+    collaborationCliques.value = null;
+
+    if (eventSource) {
+        eventSource.close();
+    }
+
+    eventSource = new EventSource(api.config.apiRoot + '/stats/collaboration/complete-subgraphs');
+
+    eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        console.log(data)
+
+        if (data.status === 'build_adjacency_list') {
+            if (data.progress > 98) {
+                currentStep.value = 3;
+            } else {
+                currentStep.value = 2;
+                buildProgress.value = data.progress;
+            }
+        }
+        else if (data.status === 'pivoter') {
+            currentStep.value = 3;
+        }
+        else if (data.status === 'done') {
+            currentStep.value = 4;
+            collaborationCliques.value = data.data;
+            isAnalyzing.value = false;
+            eventSource.close();
+        }
+    };
+
+    eventSource.onerror = (error) => {
+        console.error('SSE Error:', error);
+        isAnalyzing.value = false;
+        if (eventSource) {
+            eventSource.close();
+        }
     }
 }
 
@@ -463,6 +499,42 @@ watch(activeTab, (newValue, oldValue) => {
                     A k-clique represents a group where every author has collaborated with every other author in the
                     group.
                 </p>
+
+                <!-- Progress Steps -->
+                <ul class="steps w-full mb-6">
+                    <li class="step" :class="{ 'step-primary': currentStep >= 1 }">
+                        Initialize
+                    </li>
+                    <li class="step" :class="{ 'step-primary': currentStep >= 2 }">
+                        Build Adjacency List
+                    </li>
+                    <li class="step" :class="{ 'step-primary': currentStep >= 3 }">
+                        Run Pivoter Algorithm
+                    </li>
+                    <li class="step" :class="{ 'step-primary': currentStep >= 4 }">
+                        Complete
+                    </li>
+                </ul>
+
+                <!-- Progress Indicators -->
+                <div class="grid gap-4">
+                    <!-- Building Adjacency List Progress -->
+                    <div v-if="currentStep === 2" class="w-full">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium">Building Adjacency List</span>
+                            <span class="text-sm font-medium">{{ Math.round(buildProgress) }}%</span>
+                        </div>
+                        <progress class="progress progress-primary w-full" :value="buildProgress" max="100"></progress>
+                    </div>
+
+                    <!-- Progress -->
+                    <div v-if="currentStep === 3 || currentStep === 1" class="flex items-center justify-center gap-3">
+                        <span class="text-sm font-medium">{{
+                            [null, "Initializing", null, "Running Pivoter Algorithm"].at(currentStep)
+                            }}</span>
+                        <span class="loading loading-spinner text-primary"></span>
+                    </div>
+                </div>
 
                 <div class="stats shadow mb-6" ref="statsContainerRef">
                     <div v-for="cliqueinfo in collaborationCliques" class="stat">
