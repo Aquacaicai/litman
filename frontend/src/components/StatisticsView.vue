@@ -30,7 +30,8 @@ const keywordsStats = ref(undefined);
 const selectedYear = ref(null);
 const currentPage = ref(1);
 const itemsPerPage = 10;
-const isLoading = ref(false);
+const isLoadingAuthor = ref(false);
+const isLoadingKeyword = ref(false);
 
 const authorChartOptions = computed(() => {
     if (!authorStats.value) return { series: [] };
@@ -51,8 +52,8 @@ const authorChartOptions = computed(() => {
             axisPointer: {
                 type: 'shadow'
             },
-            backgroundColor: getDaisyUIColor('ac'),
-            borderColor: getDaisyUIColor('ac'),
+            backgroundColor: getDaisyUIColor('n'),
+            borderColor: getDaisyUIColor('n'),
             textStyle: {
                 color: getDaisyUIColor('nc')
             }
@@ -129,7 +130,7 @@ const paginatedAuthors = computed(() => {
 });
 
 async function loadAuthorStatistics() {
-    isLoading.value = true;
+    isLoadingAuthor.value = true;
 
     try {
         const results = await api.stats.getAuthorArticleCounts();
@@ -137,12 +138,12 @@ async function loadAuthorStatistics() {
     } catch (error) {
         console.error('Error fetching author\'s article count:', error);
     } finally {
-        isLoading.value = false;
+        isLoadingAuthor.value = false;
     }
 }
 
 async function loadKeywordTrends() {
-    isLoading.value = true;
+    isLoadingKeyword.value = true;
 
     try {
         const results = await api.stats.getYearlyKeywordFrequencies()
@@ -165,7 +166,7 @@ async function loadKeywordTrends() {
     } catch (error) {
         console.error('Error fetching keyword freq:', error);
     } finally {
-        isLoading.value = false;
+        isLoadingKeyword.value = false;
     }
 }
 
@@ -241,8 +242,8 @@ const keywordTrendChartOptions = computed(() => {
         },
         tooltip: {
             trigger: 'axis',
-            backgroundColor: getDaisyUIColor('ac'),
-            borderColor: getDaisyUIColor('ac'),
+            backgroundColor: getDaisyUIColor('n'),
+            borderColor: getDaisyUIColor('n'),
             textStyle: {
                 color: getDaisyUIColor('nc')
             },
@@ -322,7 +323,7 @@ watch(activeTab, (newValue, oldValue) => {
             <div class="card-body">
                 <h2 class="card-title">Publications by Author</h2>
 
-                <div v-if="isLoading" class="flex justify-center my-4">
+                <div v-if="isLoadingAuthor" class="flex justify-center my-4">
                     <span class="loading loading-spinner loading-lg"></span>
                 </div>
 
@@ -390,7 +391,7 @@ watch(activeTab, (newValue, oldValue) => {
             <div class="card-body">
                 <h2 class="card-title">Keyword Trends by Year</h2>
 
-                <div v-if="isLoading" class="flex justify-center my-4">
+                <div v-if="isLoadingKeyword" class="flex justify-center my-4">
                     <span class="loading loading-spinner loading-lg"></span>
                 </div>
                 <div v-else-if="keywordsStats && selectedYear" class="overflow-x-auto">

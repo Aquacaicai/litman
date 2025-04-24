@@ -31,7 +31,8 @@ const selectedAuthor = ref(null);
 const coauthoredArticles = ref([]);
 const collaborationCliques = ref(null);
 const statsContainerRef = ref(null);
-const isLoading = ref(false);
+const isLoadingCollabNet = ref(false);
+const isLoadingCollabArticles = ref(false);
 
 onMounted(() => {
     if (route.query.tab) {
@@ -133,8 +134,8 @@ const cliqueChartOptions = computed(() => {
             axisPointer: {
                 type: 'shadow'
             },
-            backgroundColor: getDaisyUIColor('ac'),
-            borderColor: getDaisyUIColor('ac'),
+            backgroundColor: getDaisyUIColor('n'),
+            borderColor: getDaisyUIColor('n'),
             textStyle: {
                 color: getDaisyUIColor('nc')
             }
@@ -146,7 +147,7 @@ const cliqueChartOptions = computed(() => {
 async function loadCollaborationNetwork() {
     if (!authorName.value) return;
 
-    isLoading.value = true;
+    isLoadingCollabNet.value = true;
     try {
         const result = await api.author.getAuthorCollaborators(authorName.value);
         selectedAuthor.value = authorName.value;
@@ -154,7 +155,7 @@ async function loadCollaborationNetwork() {
     } catch (error) {
         console.error('Error fetching author collaborators:', error);
     } finally {
-        isLoading.value = false;
+        isLoadingCollabNet.value = false;
     }
 }
 
@@ -204,6 +205,14 @@ const collaborationNetworkChartOptions = computed(() => {
             },
         },
         tooltip: {
+            axisPointer: {
+                type: 'shadow'
+            },
+            backgroundColor: getDaisyUIColor('n'),
+            borderColor: getDaisyUIColor('n'),
+            textStyle: {
+                color: getDaisyUIColor('nc')
+            },
             formatter: function (params) {
                 if (params.dataType === 'edge') {
                     return `${params.data.source} and ${params.data.target}: ${params.data.value} collaborations`;
@@ -289,9 +298,8 @@ function handleCollaborationNetworkChartClick(params) {
     }
 }
 
-
 async function fetchCoauthoredArticles(author, coauthor) {
-    isLoading.value = true;
+    isLoadingCollabArticles.value = true;
     try {
         const result = await api.author.getAuthorCoauthoredArticles(author, coauthor);
         coauthoredArticles.value = result.data;
@@ -299,7 +307,7 @@ async function fetchCoauthoredArticles(author, coauthor) {
         console.error('Error fetching coauthored articles:', error);
         coauthoredArticles.value = [];
     } finally {
-        isLoading.value = false;
+        isLoadingCollabArticles.value = false;
     }
 }
 function handleSearchClick() {
@@ -390,14 +398,14 @@ watch(activeTab, (newValue, oldValue) => {
                     <div class="flex gap-2">
                         <input type="text" v-model="authorName" placeholder="Enter author name"
                             class="input input-bordered flex-1" />
-                        <button class="btn btn-primary" @click="handleSearchClick" :disabled="isLoading">
-                            <span v-if="isLoading">Loading...</span>
+                        <button class="btn btn-primary" @click="handleSearchClick" :disabled="isLoadingCollabNet">
+                            <span v-if="isLoadingCollabNet">Loading...</span>
                             <span v-else>Search</span>
                         </button>
                     </div>
                 </div>
                 <!-- Loading indicator -->
-                <div v-if="isLoading" class="flex justify-center my-4">
+                <div v-if="isLoadingCollabNet" class="flex justify-center my-4">
                     <span class="loading loading-spinner loading-lg"></span>
                 </div>
                 <!-- Network visualization -->
@@ -405,8 +413,12 @@ watch(activeTab, (newValue, oldValue) => {
                     <v-chart class="w-full h-full" :option="collaborationNetworkChartOptions"
                         @click="handleCollaborationNetworkChartClick" autoresize />
                 </div>
+
                 <!-- Coauthored articles table -->
-                <div v-if="selectedLink && coauthoredArticles.length > 0" class="mt-6">
+                <div v-if="isLoadingCollabArticles" class="flex justify-center my-4">
+                    <span class="loading loading-spinner loading-lg"></span>
+                </div>
+                <div v-else-if="selectedLink && coauthoredArticles.length > 0" class="mt-6">
                     <h3 class="font-bold text-lg mb-4">
                         Collaborations between {{ selectedLink.author }} and {{ selectedLink.coauthor }}
                     </h3>
