@@ -248,7 +248,7 @@ function viewArticle(articleId) {
                     </label>
                     <div class="flex gap-2">
                         <input type="text" v-model="authorName" placeholder="Enter author name"
-                            class="input input-bordered flex-1" />
+                            class="input input-bordered flex-1" @keyup.enter="handleSearchByAuthorClick" />
                         <button class="btn btn-primary" @click="handleSearchByAuthorClick" :disabled="isLoading">
                             <span v-if="isLoading">Searching...</span>
                             <span v-else>Search</span>
@@ -303,7 +303,7 @@ function viewArticle(articleId) {
                     </label>
                     <div class="flex gap-2">
                         <input type="text" placeholder="Enter paper title" v-model="title"
-                            class="input input-bordered flex-1" />
+                            class="input input-bordered flex-1" @keyup.enter="handleSearchByTitleClick" />
                         <button class="btn btn-primary" @click="handleSearchByTitleClick">Search</button>
                     </div>
                 </div>
@@ -347,7 +347,7 @@ function viewArticle(articleId) {
                     </label>
                     <div class="flex gap-2">
                         <input type="text" v-model="fuzzyTitle" placeholder="Enter title keywords"
-                            class="input input-bordered flex-1" />
+                            class="input input-bordered flex-1" @keyup.enter="handleSearchByFuzzyTitleClick" />
                         <button class="btn btn-primary" @click="handleSearchByFuzzyTitleClick">Search</button>
                     </div>
                 </div>

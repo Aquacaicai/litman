@@ -437,7 +437,7 @@ watch(activeTab, (newValue, oldValue) => {
                 <div class="form-control mb-4">
                     <div class="flex gap-2">
                         <input type="text" v-model="authorName" placeholder="Enter author name"
-                            class="input input-bordered flex-1" />
+                            class="input input-bordered flex-1" @keyup.enter="handleSearchClick" />
                         <button class="btn btn-primary" @click="handleSearchClick" :disabled="isLoadingCollabNet">
                             <span v-if="isLoadingCollabNet">Loading...</span>
                             <span v-else>Search</span>
