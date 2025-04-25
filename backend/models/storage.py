@@ -259,7 +259,7 @@ class LiteratureStorage:
     def get_author_article_counts(self) -> Dict[str, int]:
         author_counts = {}
 
-        all_authors = self.author_index.getAllKeys()
+        all_authors = self.author_index.keys()
 
         for author in all_authors:
             articles = self.author_index.find(author)
@@ -273,8 +273,8 @@ class LiteratureStorage:
         yearly_keywords = {}
         yearly_total_articles = {}
 
-        years = self.date_index.getAllKeys()[1:]
-        article_ids_per_year = self.date_index.getAllValues()[1:]
+        years = self.date_index.keys()[1:]
+        article_ids_per_year = self.date_index.values()[1:]
         for year, article_ids in zip(years, article_ids_per_year):
             if year == 0:
                 continue
@@ -283,8 +283,8 @@ class LiteratureStorage:
 
         keyword_count = 0
 
-        keywords = self.keyword_index.getAllKeys()
-        keyword_article_ids = self.keyword_index.getAllValues()
+        keywords = self.keyword_index.keys()
+        keyword_article_ids = self.keyword_index.values()
 
         blacklist = ["based", "of", "the", "using"]
         filtered_data = [(word, ids) for word, ids in zip(
@@ -331,7 +331,7 @@ class LiteratureStorage:
         return result
 
     def build_adjacency_list_with_progress(self, progress_callback=None):
-        all_authors = list(self.author_index.getAllKeys())
+        all_authors = list(self.author_index.keys())
         author_to_id = {author: idx for idx, author in enumerate(all_authors)}
         num_vertices = len(all_authors)
 

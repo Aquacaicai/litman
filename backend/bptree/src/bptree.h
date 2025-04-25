@@ -53,15 +53,12 @@ private:
     Node<KeyT, ValT>* splitLeaf(Node<KeyT, ValT>* _leaf);
     void createIndex(Node<KeyT, ValT>* _new_node, KeyT _index);
     std::pair<Node<KeyT, ValT>*, KeyT> splitNode(Node<KeyT, ValT>* _node);
-    void handleNodeUnderflow(Node<KeyT, ValT>* node);
-    void handleLeafUnderflow(Node<KeyT, ValT>* leaf);
 
 public:
     BPTree(int order);
-    std::vector<KeyT> getAllKeys();
-    std::vector<ValT> getAllValues();
+    std::vector<KeyT> keys();
+    std::vector<ValT> values();
     void insert(KeyT _key, ValT _val);
-    void erase(KeyT _key);
     bool update(KeyT _key, ValT _new_val);
     ValT* find(KeyT _key);
     void deserialize(const std::string& filename);
@@ -69,7 +66,7 @@ public:
 };
 
 template<typename KeyT, typename ValT>
-std::vector<KeyT> BPTree<KeyT, ValT>::getAllKeys() {
+std::vector<KeyT> BPTree<KeyT, ValT>::keys() {
     std::vector<KeyT> result;
 
     if (!root) {
@@ -92,7 +89,7 @@ std::vector<KeyT> BPTree<KeyT, ValT>::getAllKeys() {
 }
 
 template<typename KeyT, typename ValT>
-std::vector<ValT> BPTree<KeyT, ValT>::getAllValues() {
+std::vector<ValT> BPTree<KeyT, ValT>::values() {
     std::vector<ValT> result;
 
     if (!root) {
@@ -237,213 +234,6 @@ void BPTree<KeyT, ValT>::insert(KeyT _key, ValT _val) {
         else {
             createIndex(new_leaf, new_leaf->key[0]);
         }
-    }
-}
-template<typename KeyT, typename ValT>
-void BPTree<KeyT, ValT>::erase(KeyT _key) {
-    std::pair<Node<KeyT, ValT>*, int> pair = keyIndexInLeaf(_key);
-    Node<KeyT, ValT>* leaf = pair.first;
-    int loc = pair.second;
-
-    if (loc == -1 || leaf->key[loc] != _key) {
-        std::cout << "Key " << _key << " is not in B+ tree" << std::endl;
-        return;
-    }
-
-    leaf->key.erase(leaf->key.begin() + loc);
-    delete leaf->ptr2val[loc];
-    leaf->ptr2val.erase(leaf->ptr2val.begin() + loc);
-
-    // no underflow
-    if (leaf->key.size() >= (order + 1) / 2 || leaf == root) {
-        return;
-    }
-
-    handleLeafUnderflow(leaf);
-}
-
-template<typename KeyT, typename ValT>
-void BPTree<KeyT, ValT>::handleLeafUnderflow(Node<KeyT, ValT>* leaf) {
-    Node<KeyT, ValT>* parent = leaf->parent;
-    int idx = -1;
-
-    // index in parent node
-    for (size_t i = 0; i < parent->ptr2node.size(); ++i) {
-        if (parent->ptr2node[i] == leaf) {
-            idx = i;
-            break;
-        }
-    }
-
-    // borrow from left sib
-    if (idx > 0) {
-        Node<KeyT, ValT>* left_sibling = parent->ptr2node[idx - 1];
-        if (left_sibling->key.size() > (order + 1) / 2) {
-            // borrow
-            leaf->key.insert(leaf->key.begin(), left_sibling->key.back());
-            leaf->ptr2val.insert(leaf->ptr2val.begin(), left_sibling->ptr2val.back());
-            left_sibling->key.pop_back();
-            left_sibling->ptr2val.pop_back();
-
-            // update parent index
-            parent->key[idx - 1] = leaf->key[0];
-            return;
-        }
-    }
-
-    // borrow from right sib
-    if (idx < parent->ptr2node.size() - 1) {
-        Node<KeyT, ValT>* right_sibling = parent->ptr2node[idx + 1];
-        if (right_sibling->key.size() > (order + 1) / 2) {
-            // borrow
-            leaf->key.push_back(right_sibling->key.front());
-            leaf->ptr2val.push_back(right_sibling->ptr2val.front());
-            right_sibling->key.erase(right_sibling->key.begin());
-            right_sibling->ptr2val.erase(right_sibling->ptr2val.begin());
-
-            // update parent index
-            parent->key[idx] = right_sibling->key[0];
-            return;
-        }
-    }
-
-    // can't borrow, merge
-    if (idx > 0) {
-        // left
-        Node<KeyT, ValT>* left_sibling = parent->ptr2node[idx - 1];
-        left_sibling->key.insert(left_sibling->key.end(), leaf->key.begin(), leaf->key.end());
-        left_sibling->ptr2val.insert(left_sibling->ptr2val.end(), leaf->ptr2val.begin(), leaf->ptr2val.end());
-        left_sibling->next = leaf->next;
-
-        parent->key.erase(parent->key.begin() + idx - 1);
-        parent->ptr2node.erase(parent->ptr2node.begin() + idx);
-
-        delete leaf;
-
-        if (parent->key.size() < (order + 1) / 2 && parent != root) {
-            handleNodeUnderflow(parent);
-        }
-    }
-    else {
-        // right
-        Node<KeyT, ValT>* right_sibling = parent->ptr2node[idx + 1];
-        leaf->key.insert(leaf->key.end(), right_sibling->key.begin(), right_sibling->key.end());
-        leaf->ptr2val.insert(leaf->ptr2val.end(), right_sibling->ptr2val.begin(), right_sibling->ptr2val.end());
-        leaf->next = right_sibling->next;
-
-        parent->key.erase(parent->key.begin() + idx);
-        parent->ptr2node.erase(parent->ptr2node.begin() + idx + 1);
-
-        delete right_sibling;
-
-        if (parent->key.size() < (order + 1) / 2 && parent != root) {
-            handleNodeUnderflow(parent);
-        }
-    }
-
-    // parent is empty
-    if (root->key.empty() && !root->ptr2node.empty()) {
-        Node<KeyT, ValT>* new_root = root->ptr2node[0];
-        delete root;
-        root = new_root;
-        root->parent = nullptr;
-    }
-}
-
-template<typename KeyT, typename ValT>
-void BPTree<KeyT, ValT>::handleNodeUnderflow(Node<KeyT, ValT>* node) {
-    Node<KeyT, ValT>* parent = node->parent;
-    int idx = -1;
-
-    for (size_t i = 0; i < parent->ptr2node.size(); ++i) {
-        if (parent->ptr2node[i] == node) {
-            idx = i;
-            break;
-        }
-    }
-
-    // borrow from left
-    if (idx > 0) {
-        Node<KeyT, ValT>* left_sibling = parent->ptr2node[idx - 1];
-        if (left_sibling->key.size() > (order + 1) / 2) {
-            // borrow
-            node->key.insert(node->key.begin(), parent->key[idx - 1]);
-            node->ptr2node.insert(node->ptr2node.begin(), left_sibling->ptr2node.back());
-            left_sibling->ptr2node.back()->parent = node;
-
-            // update parent index
-            parent->key[idx - 1] = left_sibling->key.back();
-            left_sibling->key.pop_back();
-            left_sibling->ptr2node.pop_back();
-            return;
-        }
-    }
-
-    // borrow from right
-    if (idx < parent->ptr2node.size() - 1) {
-        Node<KeyT, ValT>* right_sibling = parent->ptr2node[idx + 1];
-        if (right_sibling->key.size() > (order + 1) / 2) {
-            // borrow
-            node->key.push_back(parent->key[idx]);
-            node->ptr2node.push_back(right_sibling->ptr2node.front());
-            right_sibling->ptr2node.front()->parent = node;
-
-            // update parent index
-            parent->key[idx] = right_sibling->key.front();
-            right_sibling->key.erase(right_sibling->key.begin());
-            right_sibling->ptr2node.erase(right_sibling->ptr2node.begin());
-            return;
-        }
-    }
-
-    // can't borrow, merge
-    if (idx > 0) {
-        // left
-        Node<KeyT, ValT>* left_sibling = parent->ptr2node[idx - 1];
-        left_sibling->key.push_back(parent->key[idx - 1]);
-        left_sibling->key.insert(left_sibling->key.end(), node->key.begin(), node->key.end());
-        left_sibling->ptr2node.insert(left_sibling->ptr2node.end(), node->ptr2node.begin(), node->ptr2node.end());
-
-        for (auto& child : node->ptr2node) {
-            child->parent = left_sibling;
-        }
-
-        parent->key.erase(parent->key.begin() + idx - 1);
-        parent->ptr2node.erase(parent->ptr2node.begin() + idx);
-
-        delete node;
-
-        if (parent->key.size() < (order + 1) / 2 && parent != root) {
-            handleNodeUnderflow(parent);
-        }
-    }
-    else {
-        // right
-        Node<KeyT, ValT>* right_sibling = parent->ptr2node[idx + 1];
-        node->key.push_back(parent->key[idx]);
-        node->key.insert(node->key.end(), right_sibling->key.begin(), right_sibling->key.end());
-        node->ptr2node.insert(node->ptr2node.end(), right_sibling->ptr2node.begin(), right_sibling->ptr2node.end());
-
-        for (auto& child : right_sibling->ptr2node) {
-            child->parent = node;
-        }
-
-        parent->key.erase(parent->key.begin() + idx);
-        parent->ptr2node.erase(parent->ptr2node.begin() + idx + 1);
-
-        delete right_sibling;
-
-        if (parent->key.size() < (order + 1) / 2 && parent != root) {
-            handleNodeUnderflow(parent);
-        }
-    }
-
-    // parent is empty
-    if (root->key.empty() && !root->ptr2node.empty()) {
-        Node<KeyT, ValT>* new_root = root->ptr2node[0];
-        delete root;
-        root = new_root;
-        root->parent = nullptr;
     }
 }
 
