@@ -45,7 +45,7 @@ onMounted(() => {
 
     if (route.query.fuzzyTitle) {
         fuzzyTitle.value = route.query.fuzzyTitle;
-        if (activeTab.value === 'fuzzySearch') {
+        if (activeTab.value === 'byKeywords') {
             handleSearchByFuzzyTitleClick();
             if (route.query.page) {
                 currentPage.value = parseInt(route.query.page) || 1;
@@ -211,7 +211,7 @@ function viewArticle(articleId) {
         queryParams.authorName = authorName.value;
     } else if (activeTab.value === 'byTitle' && title.value) {
         queryParams.title = title.value;
-    } else if (activeTab.value === 'fuzzySearch' && fuzzyTitle.value) {
+    } else if (activeTab.value === 'byKeywords' && fuzzyTitle.value) {
         queryParams.fuzzyTitle = fuzzyTitle.value;
         queryParams.page = currentPage.value;
     }
@@ -234,8 +234,8 @@ function viewArticle(articleId) {
                 Author</a>
             <a class="tab" :class="{ 'tab-active': activeTab === 'byTitle' }" @click="activeTab = 'byTitle'">By
                 Title</a>
-            <a class="tab" :class="{ 'tab-active': activeTab === 'fuzzySearch' }"
-                @click="activeTab = 'fuzzySearch'">Fuzzy Search</a>
+            <a class="tab" :class="{ 'tab-active': activeTab === 'byKeywords' }" @click="activeTab = 'byKeywords'">By
+                Keywords</a>
         </div>
 
         <!-- Search by Author -->
@@ -299,10 +299,10 @@ function viewArticle(articleId) {
                 <h2 class="card-title">Search by Title</h2>
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text">Paper Title</span>
+                        <span class="label-text">Literature Title</span>
                     </label>
                     <div class="flex gap-2">
-                        <input type="text" placeholder="Enter paper title" v-model="title"
+                        <input type="text" placeholder="Enter literature title" v-model="title"
                             class="input input-bordered flex-1" @keyup.enter="handleSearchByTitleClick" />
                         <button class="btn btn-primary" @click="handleSearchByTitleClick">Search</button>
                     </div>
@@ -337,13 +337,13 @@ function viewArticle(articleId) {
         </div>
 
 
-        <!-- Fuzzy Search -->
-        <div v-if="activeTab === 'fuzzySearch'" class="card bg-base-100 shadow-xl">
+        <!-- Keyword Search -->
+        <div v-if="activeTab === 'byKeywords'" class="card bg-base-100 shadow-xl">
             <div class="card-body">
-                <h2 class="card-title">Fuzzy Title Search</h2>
+                <h2 class="card-title">By Keywords</h2>
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text">Title Keywords</span>
+                        <span class="label-text">By Keywords</span>
                     </label>
                     <div class="flex gap-2">
                         <input type="text" v-model="fuzzyTitle" placeholder="Enter title keywords"

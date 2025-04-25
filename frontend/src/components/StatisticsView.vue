@@ -386,12 +386,6 @@ watch(activeTab, (newValue, oldValue) => {
                         <v-chart class="w-full h-full" :option="authorChartOptions" autoresize />
                     </div>
                 </div>
-
-                <div v-else class="w-full h-80 bg-base-200 mt-6 flex items-center justify-center">
-                    <div class="text-center">
-                        <p class="text-lg mb-2">No keyword data available</p>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -462,7 +456,7 @@ watch(activeTab, (newValue, oldValue) => {
                                 <td>
                                     <button class="btn btn-xs btn-ghost" @click="router.push({
                                         name: 'LiteratureSearch', query: {
-                                            tab: 'fuzzySearch',
+                                            tab: 'byKeywords',
                                             fuzzyTitle: keyword.keyword
                                         }
                                     })">View

@@ -139,7 +139,7 @@ function resetForm() {
                     <input type="file" ref="fileInput" @change="handleFileChange" accept=".xml,application/xml,text/xml"
                         class="file-input file-input-bordered w-full" />
                     <label class="label">
-                        <span class="label-text-alt">Supported formats: XML files with literature metadata</span>
+                        <span class="label-text-alt">Supported formats: XML files with DBLP formats</span>
                     </label>
                 </div>
                 <div class="flex justify-end mt-4">
