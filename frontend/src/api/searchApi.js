@@ -1,9 +1,9 @@
-import request from './request';
+import request from './request'
 
 export function searchByKeyword(query) {
-    return request({
-        url: '/search/keywords',
-        method: 'get',
-        params: { q: query }
-    });
+  return request({
+    url: '/search/keywords',
+    method: 'get',
+    params: { q: query },
+  })
 }

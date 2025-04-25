@@ -1,16 +1,16 @@
-import request from './request';
+import request from './request'
 
 export function getAuthorArticleCounts(limit = 100) {
-    return request({
-        url: '/stats/authors/article-counts',
-        method: 'get',
-        params: { limit }
-    });
+  return request({
+    url: '/stats/authors/article-counts',
+    method: 'get',
+    params: { limit },
+  })
 }
 
 export function getYearlyKeywordFrequencies() {
-    return request({
-        url: '/stats/keywords/yearly',
-        method: 'get'
-    });
+  return request({
+    url: '/stats/keywords/yearly',
+    method: 'get',
+  })
 }

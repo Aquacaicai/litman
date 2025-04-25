@@ -1,37 +1,37 @@
 <script setup>
 import { XCircleIcon, ExclamationTriangleIcon, ArrowUturnLeftIcon } from '@heroicons/vue/24/outline'
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import api from '@/api';
-import { useToast } from 'vue-toastification';
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import api from '@/api'
+import { useToast } from 'vue-toastification'
 
-const toast = useToast();
-const route = useRoute();
-const router = useRouter();
-const article = ref(null);
-const isLoading = ref(true);
-const error = ref(null);
+const toast = useToast()
+const route = useRoute()
+const router = useRouter()
+const article = ref(null)
+const isLoading = ref(true)
+const error = ref(null)
 
 onMounted(async () => {
-  const articleId = route.params.id;
+  const articleId = route.params.id
   if (!articleId) {
-    toast.error(`No article ID provided!`);
-    error.value = 'No article ID provided';
-    isLoading.value = false;
-    return;
+    toast.error(`No article ID provided!`)
+    error.value = 'No article ID provided'
+    isLoading.value = false
+    return
   }
 
   try {
-    const response = await api.article.getArticle(articleId);
-    article.value = response.data;
-    toast.success("Article info fetched successfully!");
+    const response = await api.article.getArticle(articleId)
+    article.value = response.data
+    toast.success('Article info fetched successfully!')
   } catch (err) {
-    toast.error(`Error fetching article: ${err}`);
-    error.value = 'Failed to load article details. Please try again later.';
+    toast.error(`Error fetching article: ${err}`)
+    error.value = 'Failed to load article details. Please try again later.'
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-});
+})
 
 function goBack() {
   if (route.query.returnPage) {
@@ -42,8 +42,8 @@ function goBack() {
           tab: route.query.returnTab,
           authorName: route.query.authorName || '',
           title: route.query.title || '',
-          keywordsPattern: route.query.keywordsPattern || ''
-        }
+          keywordsPattern: route.query.keywordsPattern || '',
+        },
       })
     } else if (route.query.returnPage === 'Collaborations') {
       router.push({
@@ -52,11 +52,11 @@ function goBack() {
           tab: route.query.returnTab,
           coauthor: route.query.coauthor || '',
           authorName: route.query.authorName || '',
-        }
+        },
       })
     }
   } else {
-    router.back();
+    router.back()
   }
 }
 </script>
@@ -86,24 +86,30 @@ function goBack() {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div class="col-span-2">
             <div class="badge badge-primary mr-2" v-if="article.year">{{ article.year }}</div>
-            <div class="badge badge-secondary mr-2" v-if="article.journal">{{ article.journal }}</div>
+            <div class="badge badge-secondary mr-2" v-if="article.journal">
+              {{ article.journal }}
+            </div>
             <div class="badge badge-accent" v-if="article.booktitle">{{ article.booktitle }}</div>
           </div>
 
           <div class="mb-4" v-if="article.authors && article.authors.length">
             <h3 class="font-bold text-lg">Authors</h3>
-            <p>{{ article.authors.join(", ") }}</p>
+            <p>{{ article.authors.join(', ') }}</p>
           </div>
 
           <div class="mb-4" v-if="article.editors && article.editors.length">
             <h3 class="font-bold text-lg">Editors</h3>
-            <p>{{ article.editors.join(", ") }}</p>
+            <p>{{ article.editors.join(', ') }}</p>
           </div>
 
           <div class="mb-4" v-if="article.keywords && article.keywords.length">
             <h3 class="font-bold text-lg">Keywords</h3>
             <div class="flex flex-wrap gap-1 mt-1">
-              <div class="badge badge-outline" v-for="(keyword, index) in article.keywords" :key="index">
+              <div
+                class="badge badge-outline"
+                v-for="(keyword, index) in article.keywords"
+                :key="index"
+              >
                 {{ keyword }}
               </div>
             </div>
@@ -146,7 +152,12 @@ function goBack() {
         </div>
 
         <div class="card-actions justify-end mt-6">
-          <a v-if="article.url" :href="`https://dblp.org/${article.url}`" target="_blank" class="btn btn-primary">
+          <a
+            v-if="article.url"
+            :href="`https://dblp.org/${article.url}`"
+            target="_blank"
+            class="btn btn-primary"
+          >
             Visit Source
           </a>
           <a v-if="article.ee" :href="article.ee" target="_blank" class="btn btn-outline">

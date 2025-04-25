@@ -1,5 +1,11 @@
 <script setup>
-import { MagnifyingGlassIcon, ChartBarIcon, UsersIcon, PlusIcon, Bars3Icon } from '@heroicons/vue/24/outline'
+import {
+  MagnifyingGlassIcon,
+  ChartBarIcon,
+  UsersIcon,
+  PlusIcon,
+  Bars3Icon,
+} from '@heroicons/vue/24/outline'
 </script>
 
 <template>
@@ -57,6 +63,5 @@ import { MagnifyingGlassIcon, ChartBarIcon, UsersIcon, PlusIcon, Bars3Icon } fro
     </div>
   </div>
 </template>
-
 
 <style></style>
