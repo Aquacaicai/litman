@@ -166,7 +166,7 @@ const totalPages = computed(() => {
     return Math.ceil(keywordsResults.value.length / itemsPerPage);
 });
 
-const paginatedFuzzyResults = computed(() => {
+const paginatedKeywordsResults = computed(() => {
     if (!keywordsResults.value || keywordsResults.value.length === 0) return [];
 
     const start = (currentPage.value - 1) * itemsPerPage;
@@ -373,7 +373,7 @@ function viewArticle(articleId) {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="article in paginatedFuzzyResults" :key="article.article_id">
+                            <tr v-for="article in paginatedKeywordsResults" :key="article.article_id">
                                 <td>{{ article.title }}</td>
                                 <td>{{ article.year }}</td>
                                 <td>{{ article.authors ? article.authors.join(', ') : "" }}</td>
