@@ -21,7 +21,7 @@ import { MagnifyingGlassIcon, ChartBarIcon, UsersIcon, PlusIcon, Bars3Icon } fro
         <router-view></router-view>
       </div>
     </div>
-    <div class="drawer-side">
+    <div class="drawer-side z-10">
       <label for="my-drawer" class="drawer-overlay"></label>
       <aside class="bg-base-200 w-64 h-full">
         <div class="p-4">
