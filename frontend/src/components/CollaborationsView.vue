@@ -156,7 +156,7 @@ async function loadCollaborationNetwork() {
 
     isLoadingCollabNet.value = true;
     try {
-        const result = await api.author.getAuthorCollaborators(authorName.value);
+        const result = await api.author.getAuthorCollaborators(authorName.value.trim());
         selectedAuthor.value = authorName.value;
         collaborators.value = result.data;
         toast.success("Author's collaborators fetched successfully!");
@@ -535,7 +535,7 @@ watch(activeTab, (newValue, oldValue) => {
                     <div v-if="CliqueStep === 3 || CliqueStep === 1" class="flex items-center justify-center gap-3">
                         <span class="text-sm font-medium">{{
                             [null, "Initializing", null, "Running Pivoter Algorithm"].at(CliqueStep)
-                            }}</span>
+                        }}</span>
                         <span class="loading loading-spinner text-primary"></span>
                     </div>
                 </div>

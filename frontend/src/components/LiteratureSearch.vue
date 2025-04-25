@@ -132,7 +132,7 @@ async function handleSearchByAuthorClick() {
 
     isLoading.value = true;
     try {
-        const results = await api.author.getAuthorArticles(authorName.value);
+        const results = await api.author.getAuthorArticles(authorName.value.trim());
         authorResults.value = results.data;
         toast.success("Author's articles fetched successfully!");
     } catch (error) {
@@ -189,7 +189,7 @@ async function handleSearchByTitleClick() {
 
     isLoading.value = true;
     try {
-        const results = await api.article.getArticleByTitle(title.value);
+        const results = await api.article.getArticleByTitle(title.value.trim());
         titleResults.value = results.data;
         toast.success("Articles of title fetched successfully!");
     } catch (error) {
