@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { BarChart, LineChart } from 'echarts/charts';
-import { GridComponent, TooltipComponent, DataZoomComponent, TitleComponent } from 'echarts/components';
+import { GridComponent, TooltipComponent, DataZoomComponent, TitleComponent, LegendComponent } from 'echarts/components';
 import VChart from 'vue-echarts';
 import { getDaisyUIColor } from '@/utils/colors';
 import { useToast } from 'vue-toastification';
@@ -20,7 +20,8 @@ use([
     GridComponent,
     TooltipComponent,
     DataZoomComponent,
-    TitleComponent
+    TitleComponent,
+    LegendComponent
 ]);
 
 const router = useRouter();
@@ -281,7 +282,10 @@ const keywordTrendChartOptions = computed(() => {
         legend: {
             data: topKeywords,
             orient: 'horizontal',
-            bottom: 0
+            bottom: 0,
+            textStyle: {
+                color: getDaisyUIColor("nc")
+            },
         },
         grid: {
             left: '3%',
