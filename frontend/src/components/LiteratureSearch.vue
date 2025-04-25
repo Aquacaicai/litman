@@ -14,11 +14,11 @@ const authorName = ref('');
 const authorResults = ref([]);
 const title = ref('');
 const titleResults = ref(undefined);
-const fuzzyTitle = ref('');
-const fuzzyTitleResults = ref([]);
+const keywordsPattern = ref('');
+const keywordsResults = ref([]);
 const isLoading = ref(false);
 
-// Pagination for fuzzy search
+// Pagination for keyword search
 const currentPage = ref(1);
 const itemsPerPage = 50;
 
@@ -43,10 +43,10 @@ onMounted(() => {
         }
     }
 
-    if (route.query.fuzzyTitle) {
-        fuzzyTitle.value = route.query.fuzzyTitle;
+    if (route.query.keywordsPattern) {
+        keywordsPattern.value = route.query.keywordsPattern;
         if (activeTab.value === 'byKeywords') {
-            handleSearchByFuzzyTitleClick();
+            handleSearchByKeywordsClick();
             if (route.query.page) {
                 currentPage.value = parseInt(route.query.page) || 1;
             }
@@ -142,16 +142,16 @@ async function handleSearchByAuthorClick() {
     }
 }
 
-async function handleSearchByFuzzyTitleClick() {
-    if (!fuzzyTitle.value.trim()) {
+async function handleSearchByKeywordsClick() {
+    if (!keywordsPattern.value.trim()) {
         toast.error(`Empty keywords!`);
         return;
     }
 
     isLoading.value = true;
     try {
-        const results = await api.search.searchByTitle(fuzzyTitle.value);
-        fuzzyTitleResults.value = results.data;
+        const results = await api.search.searchByKeyword(keywordsPattern.value);
+        keywordsResults.value = results.data;
         currentPage.value = 1;
         toast.success("Articles with keywords fetched successfully!");
     } catch (error) {
@@ -162,16 +162,16 @@ async function handleSearchByFuzzyTitleClick() {
 }
 
 const totalPages = computed(() => {
-    if (!fuzzyTitleResults.value || fuzzyTitleResults.value.length === 0) return 0;
-    return Math.ceil(fuzzyTitleResults.value.length / itemsPerPage);
+    if (!keywordsResults.value || keywordsResults.value.length === 0) return 0;
+    return Math.ceil(keywordsResults.value.length / itemsPerPage);
 });
 
 const paginatedFuzzyResults = computed(() => {
-    if (!fuzzyTitleResults.value || fuzzyTitleResults.value.length === 0) return [];
+    if (!keywordsResults.value || keywordsResults.value.length === 0) return [];
 
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
-    return fuzzyTitleResults.value.slice(start, end);
+    return keywordsResults.value.slice(start, end);
 });
 
 watch(totalPages, (newTotal) => {
@@ -211,8 +211,8 @@ function viewArticle(articleId) {
         queryParams.authorName = authorName.value;
     } else if (activeTab.value === 'byTitle' && title.value) {
         queryParams.title = title.value;
-    } else if (activeTab.value === 'byKeywords' && fuzzyTitle.value) {
-        queryParams.fuzzyTitle = fuzzyTitle.value;
+    } else if (activeTab.value === 'byKeywords' && keywordsPattern.value) {
+        queryParams.keywordsPattern = keywordsPattern.value;
         queryParams.page = currentPage.value;
     }
 
@@ -346,9 +346,9 @@ function viewArticle(articleId) {
                         <span class="label-text">By Keywords</span>
                     </label>
                     <div class="flex gap-2">
-                        <input type="text" v-model="fuzzyTitle" placeholder="Enter title keywords"
-                            class="input input-bordered flex-1" @keyup.enter="handleSearchByFuzzyTitleClick" />
-                        <button class="btn btn-primary" @click="handleSearchByFuzzyTitleClick">Search</button>
+                        <input type="text" v-model="keywordsPattern" placeholder="Enter title keywords"
+                            class="input input-bordered flex-1" @keyup.enter="handleSearchByKeywordsClick" />
+                        <button class="btn btn-primary" @click="handleSearchByKeywordsClick">Search</button>
                     </div>
                 </div>
 
@@ -358,7 +358,7 @@ function viewArticle(articleId) {
                     <span class="loading loading-spinner loading-lg"></span>
                 </div>
 
-                <div v-else-if="fuzzyTitleResults.length === 0" class="text-center py-4 text-gray-500">
+                <div v-else-if="keywordsResults.length === 0" class="text-center py-4 text-gray-500">
                     No results found
                 </div>
 
@@ -385,7 +385,7 @@ function viewArticle(articleId) {
                         </tbody>
                     </table>
 
-                    <div v-if="fuzzyTitleResults.length > 0" class="mt-4 flex justify-center">
+                    <div v-if="keywordsResults.length > 0" class="mt-4 flex justify-center">
                         <div class="flex join pagination-container">
                             <button class="join-item btn pagination-prev" :class="{ 'btn-disabled': currentPage === 1 }"
                                 @click="currentPage--" :disabled="currentPage === 1">

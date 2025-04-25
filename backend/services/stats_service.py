@@ -20,5 +20,5 @@ class StatsService:
 
         return result
 
-    def count_complete_subgraphs_with_progress(self, progress_callback=None):
-        return self.storage.count_complete_subgraphs_with_progress(progress_callback)
+    def count_cliques_with_progress(self, progress_callback=None):
+        return self.storage.count_cliques_with_progress(progress_callback)

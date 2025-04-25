@@ -20,8 +20,8 @@ class SearchService:
         res = self.storage.get_coauthor_articles(author, coauthor)
         return [article.to_dict() for article in res]
 
-    def search_articles_by_title(self, title_pattern: str) -> List[Article]:
-        return self.storage.search_articles_by_title(title_pattern)
+    def search_articles_by_keywords(self, keywords_pattern: str) -> List[Article]:
+        return self.storage.search_articles_by_keywords(keywords_pattern)
 
     def get_article_by_id(self, article_id: int) -> Optional[Article]:
         return self.storage.get_article_by_id(article_id)

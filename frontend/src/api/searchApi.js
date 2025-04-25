@@ -1,8 +1,8 @@
 import request from './request';
 
-export function searchByTitle(query) {
+export function searchByKeyword(query) {
     return request({
-        url: '/search/title',
+        url: '/search/keywords',
         method: 'get',
         params: { q: query }
     });

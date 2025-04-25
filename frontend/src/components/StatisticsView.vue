@@ -457,7 +457,7 @@ watch(activeTab, (newValue, oldValue) => {
                                     <button class="btn btn-xs btn-ghost" @click="router.push({
                                         name: 'LiteratureSearch', query: {
                                             tab: 'byKeywords',
-                                            fuzzyTitle: keyword.keyword
+                                            keywordsPattern: keyword.keyword
                                         }
                                     })">View
                                         Papers</button>

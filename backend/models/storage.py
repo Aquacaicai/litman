@@ -101,7 +101,7 @@ class LiteratureStorage:
         return file_path
 
     def _clear_cache(self) -> None:
-        self.count_complete_subgraphs_with_progress.cache.clear()
+        self.count_cliques_with_progress.cache.clear()
         self.get_yearly_keyword_frequencies.cache_clear()
         self.get_author_article_counts.cache_clear()
 
@@ -244,8 +244,8 @@ class LiteratureStorage:
 
         return articles
 
-    def search_articles_by_title(self, title_pattern: str) -> List[Article]:
-        kws = extract_keywords_basic(title_pattern)
+    def search_articles_by_keywords(self, keywords_pattern: str) -> List[Article]:
+        kws = extract_keywords_basic(keywords_pattern)
 
         result_set = set(self.keyword_index.find(kws[0]))
 
@@ -314,7 +314,7 @@ class LiteratureStorage:
         return yearly_keywords
 
     @cached(cache={}, key=lambda *args, **kwargs: 1)
-    def count_complete_subgraphs_with_progress(self, progress_callback=None):
+    def count_cliques_with_progress(self, progress_callback=None):
         adjacency_list = self.build_adjacency_list_with_progress(
             progress_callback)
 

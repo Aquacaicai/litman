@@ -6,8 +6,8 @@ from backend.config import storage
 search_service = SearchService(storage)
 
 
-@api_bp.route('/search/title', methods=['GET'])
-def search_by_title():
+@api_bp.route('/search/keywords', methods=['GET'])
+def search_by_keywords():
     query = request.args.get('q', '')
     if not query:
         return jsonify({
@@ -15,7 +15,7 @@ def search_by_title():
             'message': 'Empty keyword'
         }), 400
 
-    articles = search_service.search_articles_by_title(query)
+    articles = search_service.search_articles_by_keywords(query)
     return jsonify({
         'success': True,
         'data': [article.to_dict() for article in articles]

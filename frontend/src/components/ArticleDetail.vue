@@ -42,7 +42,7 @@ function goBack() {
           tab: route.query.returnTab,
           authorName: route.query.authorName || '',
           title: route.query.title || '',
-          fuzzyTitle: route.query.fuzzyTitle || ''
+          keywordsPattern: route.query.keywordsPattern || ''
         }
       })
     } else if (route.query.returnPage === 'Collaborations') {

@@ -38,13 +38,13 @@ def get_yearly_keyword_frequencies():
     })
 
 
-@api_bp.route('/stats/collaboration/complete-subgraphs', methods=['GET'])
-def get_complete_subgraphs():
-    return Response(stream_with_context(generate_complete_subgraphs()),
+@api_bp.route('/stats/collaboration/cliques-counts', methods=['GET'])
+def get_cliques_counts():
+    return Response(stream_with_context(generate_cliques_counts()),
                     content_type='text/event-stream')
 
 
-def generate_complete_subgraphs():
+def generate_cliques_counts():
     yield f"data: {json.dumps({'status': 'started', 'progress': 0})}\n\n"
 
     try:
@@ -74,7 +74,7 @@ def generate_complete_subgraphs():
 
         def processing_thread():
             try:
-                result['data'] = stats_service.count_complete_subgraphs_with_progress(
+                result['data'] = stats_service.count_cliques_with_progress(
                     progress_callback)
             except Exception as e:
                 progress_state.set_message('error', 0, 0)

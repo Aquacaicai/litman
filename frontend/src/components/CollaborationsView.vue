@@ -354,7 +354,7 @@ async function loadCollaborationCliques() {
         eventSource.close();
     }
 
-    eventSource = new EventSource(api.config.apiRoot + '/stats/collaboration/complete-subgraphs');
+    eventSource = new EventSource(api.config.apiRoot + '/stats/collaboration/cliques-counts');
 
     eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -535,7 +535,7 @@ watch(activeTab, (newValue, oldValue) => {
                     <div v-if="CliqueStep === 3 || CliqueStep === 1" class="flex items-center justify-center gap-3">
                         <span class="text-sm font-medium">{{
                             [null, "Initializing", null, "Running Pivoter Algorithm"].at(CliqueStep)
-                        }}</span>
+                            }}</span>
                         <span class="loading loading-spinner text-primary"></span>
                     </div>
                 </div>

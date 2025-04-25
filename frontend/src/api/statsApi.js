@@ -14,10 +14,3 @@ export function getYearlyKeywordFrequencies() {
         method: 'get'
     });
 }
-
-export function getCompleteSubgraphs() {
-    return request({
-        url: '/stats/collaboration/complete-subgraphs',
-        method: 'get'
-    });
-}
