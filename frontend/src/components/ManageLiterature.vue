@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue';
 import api from '@/api';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
 
 // Active tab state
 const activeTab = ref('import');
@@ -42,25 +45,23 @@ function handleFileChange(event) {
         };
         reader.readAsText(file);
     } else {
-        alert('Please select a valid XML file');
+        toast.error(`Please select an XML file first`);
         event.target.value = '';
         fileContent.value = null;
     }
 }
 function handleImportLiteratureClick() {
     if (!fileContent.value) {
-        alert('Please select an XML file first');
+        toast.error(`Please select an XML file first`);
         return;
     }
 
     api.import.importFromXml(fileContent.value)
         .then(response => {
-            alert('Import successful!');
-            console.log('Import response:', response);
+            toast.success(`Import ${response.count} successfully!`)
         })
         .catch(error => {
-            alert('Import failed: ' + (error.message || 'Unknown error'));
-            console.error('Import error:', error);
+            toast.error(`Error when importing: ${error}`);
         });
 }
 
@@ -80,17 +81,16 @@ async function addLiterature() {
     updateArrayFields();
 
     if (!isFormValid.value) {
-        // toast.error("Please fill in all required fields (Title, Authors, Year)");
+        toast.error("Please fill in all required fields (Title, Authors, Year)");
         return;
     }
 
     try {
         api.import.importManualArticle(article.value)
-        // toast.success("Literature added successfully!");
+        toast.success("Literature added successfully!");
         resetForm();
     } catch (error) {
-        console.error("Error adding literature:", error);
-        // toast.error("Failed to add literature. Please try again.");
+        toast.error(`Error adding literature: ${error}`);
     }
 };
 function resetForm() {

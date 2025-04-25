@@ -3,7 +3,9 @@ import { XCircleIcon, ExclamationTriangleIcon, ArrowUturnLeftIcon } from '@heroi
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/api';
+import { useToast } from 'vue-toastification';
 
+const toast = useToast();
 const route = useRoute();
 const router = useRouter();
 const article = ref(null);
@@ -13,6 +15,7 @@ const error = ref(null);
 onMounted(async () => {
   const articleId = route.params.id;
   if (!articleId) {
+    toast.error(`No article ID provided!`);
     error.value = 'No article ID provided';
     isLoading.value = false;
     return;
@@ -21,8 +24,9 @@ onMounted(async () => {
   try {
     const response = await api.article.getArticle(articleId);
     article.value = response.data;
+    toast.success("Article info fetched successfully!");
   } catch (err) {
-    console.error('Error fetching article:', err);
+    toast.error(`Error fetching article: ${err}`);
     error.value = 'Failed to load article details. Please try again later.';
   } finally {
     isLoading.value = false;

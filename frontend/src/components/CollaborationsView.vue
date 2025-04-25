@@ -8,6 +8,9 @@ import { GridComponent, TooltipComponent, DataZoomComponent, LegendComponent, Ti
 import { CanvasRenderer } from 'echarts/renderers';
 import { use } from 'echarts/core';
 import { getDaisyUIColor } from '@/utils/colors';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
 const router = useRouter();
 const route = useRoute();
 
@@ -156,8 +159,9 @@ async function loadCollaborationNetwork() {
         const result = await api.author.getAuthorCollaborators(authorName.value);
         selectedAuthor.value = authorName.value;
         collaborators.value = result.data;
+        toast.success("Author's collaborators fetched successfully!");
     } catch (error) {
-        console.error('Error fetching author collaborators:', error);
+        toast.error(`Error fetching author's collaborators: ${error}`);
     } finally {
         isLoadingCollabNet.value = false;
     }
@@ -307,8 +311,9 @@ async function fetchCoauthoredArticles(author, coauthor) {
     try {
         const result = await api.author.getAuthorCoauthoredArticles(author, coauthor);
         coauthoredArticles.value = result.data;
+        toast.success("Coauthored articles fetched successfully!");
     } catch (error) {
-        console.error('Error fetching coauthored articles:', error);
+        toast.error(`Error fetching coauthored articles: ${error}`);
         coauthoredArticles.value = [];
     } finally {
         isLoadingCollabArticles.value = false;
@@ -316,7 +321,7 @@ async function fetchCoauthoredArticles(author, coauthor) {
 }
 function handleSearchClick() {
     if (!authorName.value.trim()) {
-        alert('Please enter an author name');
+        toast.error(`Empty author name!`);
         return;
     }
     loadCollaborationNetwork();
@@ -370,11 +375,12 @@ async function loadCollaborationCliques() {
             collaborationCliques.value = data.data;
             isRunningClique.value = false;
             eventSource.close();
+            toast.success(`Collaboration cliques fetehed successfully!`);
         }
     };
 
     eventSource.onerror = (error) => {
-        console.error('SSE Error:', error);
+        toast.error(`SSE Error: ${error}`);
         isRunningClique.value = false;
         if (eventSource) {
             eventSource.close();

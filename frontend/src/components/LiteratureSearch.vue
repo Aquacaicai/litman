@@ -3,7 +3,9 @@ import api from '@/api';
 import { useRouter, useRoute } from 'vue-router';
 import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/vue/16/solid';
+import { useToast } from 'vue-toastification';
 
+const toast = useToast();
 const router = useRouter();
 const route = useRoute();
 
@@ -124,7 +126,7 @@ onUnmounted(() => {
 
 async function handleSearchByAuthorClick() {
     if (!authorName.value.trim()) {
-        alert('Please enter an author name');
+        toast.error(`Empty author name!`);
         return;
     }
 
@@ -132,8 +134,9 @@ async function handleSearchByAuthorClick() {
     try {
         const results = await api.author.getAuthorArticles(authorName.value);
         authorResults.value = results.data;
+        toast.success("Author's articles fetched successfully!");
     } catch (error) {
-        console.error('Error fetching author articles:', error);
+        toast.error(`Error fetching author's articles: ${error}`);
     } finally {
         isLoading.value = false;
     }
@@ -141,7 +144,7 @@ async function handleSearchByAuthorClick() {
 
 async function handleSearchByFuzzyTitleClick() {
     if (!fuzzyTitle.value.trim()) {
-        alert('Please enter an fuzzy title');
+        toast.error(`Empty keywords!`);
         return;
     }
 
@@ -150,8 +153,9 @@ async function handleSearchByFuzzyTitleClick() {
         const results = await api.search.searchByTitle(fuzzyTitle.value);
         fuzzyTitleResults.value = results.data;
         currentPage.value = 1;
+        toast.success("Articles with keywords fetched successfully!");
     } catch (error) {
-        console.error('Error fetching fuzzy title articles:', error);
+        toast.error(`Error fetching articles with keywords: ${error}`);
     } finally {
         isLoading.value = false;
     }
@@ -179,7 +183,7 @@ watch(totalPages, (newTotal) => {
 
 async function handleSearchByTitleClick() {
     if (!title.value.trim()) {
-        alert('Please enter an author name');
+        toast.error(`Empty title!`);
         return;
     }
 
@@ -187,8 +191,9 @@ async function handleSearchByTitleClick() {
     try {
         const results = await api.article.getArticleByTitle(title.value);
         titleResults.value = results.data;
+        toast.success("Articles of title fetched successfully!");
     } catch (error) {
-        console.error('Error fetching title articles:', error);
+        toast.error(`Error fetching article of title: ${error}`);
     } finally {
         isLoading.value = false;
     }

@@ -9,7 +9,9 @@ import { BarChart, LineChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, DataZoomComponent, TitleComponent } from 'echarts/components';
 import VChart from 'vue-echarts';
 import { getDaisyUIColor } from '@/utils/colors';
+import { useToast } from 'vue-toastification';
 
+const toast = useToast();
 // Register ECharts components
 use([
     CanvasRenderer,
@@ -135,8 +137,9 @@ async function loadAuthorStatistics() {
     try {
         const results = await api.stats.getAuthorArticleCounts();
         authorStats.value = results.data;
+        toast.success(`Author statistics fetched successfully!`);
     } catch (error) {
-        console.error('Error fetching author\'s article count:', error);
+        toast.error(`Error fetching author\'s statistics: ${error}`);
     } finally {
         isLoadingAuthor.value = false;
     }
@@ -148,6 +151,8 @@ async function loadKeywordTrends() {
     try {
         const results = await api.stats.getYearlyKeywordFrequencies()
         keywordsStats.value = results.data;
+
+        toast.success(`Keyword frequencies fetched successfully!`);
 
         // Set selected year to the most recent year by default
         if (keywordsStats.value && Object.keys(keywordsStats.value).length > 0) {
@@ -164,7 +169,7 @@ async function loadKeywordTrends() {
             }, 100);
         }
     } catch (error) {
-        console.error('Error fetching keyword freq:', error);
+        toast.error(`Error fetching keyword frequencies: ${error}`);
     } finally {
         isLoadingKeyword.value = false;
     }
