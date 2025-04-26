@@ -1,3 +1,27 @@
+/*
+    A C++ implement of Pivoter algorithm in "The power of pivoting for
+    exact clique counting." (WSDM 2020).
+
+    Copyright (C) 2011  Darren Strash
+    Copyright (C) 2020  Shweta Jain
+    Copyright (C) 2025  ParaN3xus
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+    Contact ParaN3xus by: paran3xus007@gmail.com
+*/
+
 #ifndef MISC_H
 #define MISC_H
 
@@ -275,56 +299,6 @@ void moveFromRToXDegeneracyCliques(int vertex,
 
     *pBeginP = *pBeginP + 1;
     *pBeginR = *pBeginR + 1;
-}
-
-
-
-std::list<int>** readInGraphAdjListToDoubleEdges(int* n, int* m, const char* fpath) {
-    int u, v; // endvertices, to read edges.
-
-    FILE* fp;
-    fp = fopen(fpath, "r");
-    if (!fp) {
-        fprintf(stderr, "Could not open input file.\n");
-        exit(1);
-    }
-
-    if (fscanf(fp, "%d %d", n, m) != 2) {
-        fprintf(stderr, "Number of vertices: %d\n", *n);
-        fprintf(stderr, "Number of edges: %d\n", *m);
-        fprintf(stderr, "problem with line 1 in input file\n");
-        exit(1);
-    }
-
-    std::list<int>** adjList = new std::list<int>*[*n];
-
-    int i = 0;
-    while (i < *n) {
-        adjList[i] = new std::list<int>();
-        i++;
-    }
-
-    i = 0;
-    while (i < *m) {
-        if (fscanf(fp, "%d %d\n", &u, &v) != 2) {
-            printf("problem with line %d in input file, u=%d, v=%d\n", i + 2, u, v);
-            exit(1);
-        }
-
-        assert(u < *n && u > -1);
-        assert(v < *n && v > -1);
-        assert(u != v);
-
-        adjList[u]->push_back(v);
-        adjList[v]->push_back(u);
-
-        i++;
-    }
-
-    *m = (*m) * 2;
-
-    fclose(fp);
-    return adjList;
 }
 
 
