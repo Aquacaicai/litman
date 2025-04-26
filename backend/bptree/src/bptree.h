@@ -219,8 +219,10 @@ void BPTree<KeyT, ValT>::insert(KeyT _key, ValT _val) {
     Node<KeyT, ValT>* leaf = pair.first;
     int loc = pair.second;
     if (loc != -1 && leaf->key[loc] == _key) {
+#ifdef DEBUG
         std::cout << "Key " << _key << " with value " << *(leaf->ptr2val[loc]) << " is already in B+ tree, overwrite it with new val " << _val << std::endl;
-        *(leaf->ptr2val[loc]) = _val;
+#endif
+        * (leaf->ptr2val[loc]) = _val;
         return;
     }
     leaf->key.insert(leaf->key.begin() + loc + 1, _key);
@@ -248,7 +250,9 @@ ValT* BPTree<KeyT, ValT>::find(KeyT _key) {
     Node<KeyT, ValT>* leaf = pair.first;
     int loc = pair.second;
     if (loc == -1 || leaf->key[loc] != _key) {
+#ifdef DEBUG
         std::cout << "Key " << _key << " is not in B+ tree" << std::endl;
+#endif
         return nullptr;
     }
     else {
@@ -263,7 +267,9 @@ bool BPTree<KeyT, ValT>::update(KeyT _key, ValT _new_val) {
     Node<KeyT, ValT>* leaf = pair.first;
     int loc = pair.second;
     if (loc == -1 || leaf->key[loc] != _key) {
+#ifdef DEBUG
         std::cout << "Key " << _key << " is not in B+ tree" << std::endl;
+#endif
         return false;
     }
     else {
