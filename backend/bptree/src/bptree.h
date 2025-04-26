@@ -1,3 +1,8 @@
+/*
+    Copyright (C) 2025 Yuesong Feng
+    Copyright (C) 2025 ParaN3xus
+*/
+
 #ifndef BPTREE_H
 #define BPTREE_H
 
