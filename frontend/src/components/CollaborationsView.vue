@@ -80,6 +80,7 @@ watch(
         if (statsContainerRef.value) {
           statsContainerRef.value.scrollLeft = statsContainerRef.value.scrollWidth
         }
+        console.log(statsContainerRef.value)
       })
     }
   },
@@ -593,12 +594,10 @@ watch(
         </div>
 
         <div v-if="!isRunningClique && collaborationCliques">
-          <div class="overflow-x-auto pb-2" ref="statsContainerRef">
-            <div class="stats shadow mb-6 flex flex-nowrap">
-              <div v-for="(cliqueInfo, index) in collaborationCliques" :key="index" class="stat">
-                <div class="stat-title">{{ cliqueInfo.order }}-Cliques</div>
-                <div class="stat-value" v-html="formatLargeNumber(cliqueInfo.count)"></div>
-              </div>
+          <div class="stats shadow mb-6 flex flex-nowrap" ref="statsContainerRef">
+            <div v-for="(cliqueInfo, index) in collaborationCliques" :key="index" class="stat">
+              <div class="stat-title">{{ cliqueInfo.order }}-Cliques</div>
+              <div class="stat-value" v-html="formatLargeNumber(cliqueInfo.count)"></div>
             </div>
           </div>
 
