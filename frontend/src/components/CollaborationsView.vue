@@ -593,7 +593,7 @@ watch(
 
         <div v-if="!isRunningClique && collaborationCliques">
           <div class="overflow-x-auto pb-2" ref="statsContainerRef">
-            <div class="stats shadow mb-6 flex flex-nowrap min-w-max">
+            <div class="stats shadow mb-6 flex flex-nowrap">
               <div v-for="(cliqueInfo, index) in collaborationCliques" :key="index" class="stat">
                 <div class="stat-title">{{ cliqueInfo.order }}-Cliques</div>
                 <div class="stat-value" v-html="formatLargeNumber(cliqueInfo.count)"></div>
