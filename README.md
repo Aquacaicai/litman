@@ -45,7 +45,7 @@ Then open the URL bound to Flask, which is [http://127.0.0.1:2747](http://127.0.
 
 After launching Litman, simply run
 
-```python
+```sh
 python load_full_dblp.py
 ```
 
