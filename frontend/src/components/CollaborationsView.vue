@@ -319,6 +319,7 @@ function handleCollaborationNetworkChartClick(params) {
           author: params.data.id,
         },
       })
+      selectedLink.value = null
     }
   }
 }
