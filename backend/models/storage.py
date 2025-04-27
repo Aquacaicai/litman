@@ -286,7 +286,7 @@ class LiteratureStorage:
         keywords = self.keyword_index.keys()
         keyword_article_ids = self.keyword_index.values()
 
-        blacklist = ["based", "of", "the", "using"]
+        blacklist = ["based", "of", "the", "using", "via"]
         filtered_data = [(word, ids) for word, ids in zip(
             keywords, keyword_article_ids) if word not in blacklist]
 
