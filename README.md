@@ -52,3 +52,7 @@ python load_full_dblp.py
 to download, unarchive, split, and finally load DBLP dataset to Litman.
 
 Or, you can use the "Import Literature" feature under "Manage Literature" tab in our web frontend to load DBLP XML format datasets manually.
+
+## License
+
+The repository is published under [GNU General Public License v3](https://github.com/ParaN3xus/litman/blob/main/LICENSE).
