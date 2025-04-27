@@ -51,6 +51,8 @@ python load_full_dblp.py
 
 to download, unarchive, split, and finally load DBLP dataset to Litman.
 
+Note: On my computer, this took about seven hours.
+
 Or, you can use the "Import Literature" feature under "Manage Literature" tab in our web frontend to load DBLP XML format datasets manually.
 
 ## License
