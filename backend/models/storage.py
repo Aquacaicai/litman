@@ -1,6 +1,6 @@
 import os
 import pickle
-from typing import List, Dict, Optional, Tuple, Any, Set
+from typing import List, Dict, Optional
 from bptree import BPTreeIntStr, BPTreeIntVecInt, BPTreeWStrInt, BPTreeWStrVecInt
 from backend.models.article import Article
 from backend.utils.xml_parser import extract_keywords_basic
@@ -8,7 +8,6 @@ from pivoter import pivoter
 from functools import lru_cache
 from cachetools import cached
 
-import tqdm
 # 256MB
 MAX_FILE_SIZE = 256 * 1024 * 1024
 
@@ -36,6 +35,8 @@ class LiteratureStorage:
         self._load_indices()
         self.max_article_id = self._get_max_article_id()
         self.current_bin_file = self._get_current_bin_file()
+
+        # self.benchmark()
 
     def _load_indices(self):
         main_index_file = os.path.join(self.index_dir, "main_index.dat")
@@ -176,6 +177,176 @@ class LiteratureStorage:
             self._clear_cache()
 
         return article.article_id
+
+    def benchmark(self, iterations=10000):
+        import time
+        import random
+        from tabulate import tabulate
+        import statistics
+
+        results = []
+        detailed_timing = {}
+
+        print(f"benchmarking: iterate {iterations} times...")
+
+        max_article_id = self._get_max_article_id()
+        if max_article_id <= 0:
+            print("ERR: nothing to test!")
+            return
+
+        all_article_ids = self.main_index.keys()
+        all_authors = self.author_index.keys()
+        all_titles = self.title_index.keys()
+        all_keywords = self.keyword_index.keys()
+
+        if not all_article_ids or not all_authors or not all_titles:
+            print("ERR: not enough data to test!")
+            return
+
+        print("benchmarking get_article_by_id...")
+        id_timings = []
+        random_ids = random.choices(
+            all_article_ids, k=min(iterations, len(all_article_ids)))
+        for i in range(iterations):
+            article_id = random_ids[i % len(random_ids)]
+            start_time = time.time()
+            self.get_article_by_id(article_id)
+            id_timings.append(time.time() - start_time)
+
+        detailed_timing["get_article_by_id"] = id_timings
+        results.append([
+            "get_article_by_id",
+            statistics.mean(id_timings),
+            statistics.median(id_timings),
+            min(id_timings),
+            max(id_timings),
+            statistics.stdev(id_timings) if len(id_timings) > 1 else 0
+        ])
+
+        print("benchmarking get_articles_by_author...")
+        author_timings = []
+        random_authors = random.choices(
+            all_authors, k=min(iterations, len(all_authors)))
+        for i in range(iterations):
+            author = random_authors[i % len(random_authors)]
+            start_time = time.time()
+            self.get_articles_by_author(author)
+            author_timings.append(time.time() - start_time)
+
+        detailed_timing["get_articles_by_author"] = author_timings
+        results.append([
+            "get_articles_by_author",
+            statistics.mean(author_timings),
+            statistics.median(author_timings),
+            min(author_timings),
+            max(author_timings),
+            statistics.stdev(author_timings) if len(author_timings) > 1 else 0
+        ])
+
+        print("benchmarking get_article_by_title...")
+        title_timings = []
+        random_titles = random.choices(
+            all_titles, k=min(iterations, len(all_titles)))
+        for i in range(iterations):
+            title = random_titles[i % len(random_titles)]
+            start_time = time.time()
+            self.get_article_by_title(title)
+            title_timings.append(time.time() - start_time)
+
+        detailed_timing["get_article_by_title"] = title_timings
+        results.append([
+            "get_article_by_title",
+            statistics.mean(title_timings),
+            statistics.median(title_timings),
+            min(title_timings),
+            max(title_timings),
+            statistics.stdev(title_timings) if len(title_timings) > 1 else 0
+        ])
+
+        print("benchmarking get_collaborators...")
+        collaborators_timings = []
+        for i in range(iterations):
+            author = random_authors[i % len(random_authors)]
+            start_time = time.time()
+            self.get_collaborators(author)
+            collaborators_timings.append(time.time() - start_time)
+
+        detailed_timing["get_collaborators"] = collaborators_timings
+        results.append([
+            "get_collaborators",
+            statistics.mean(collaborators_timings),
+            statistics.median(collaborators_timings),
+            min(collaborators_timings),
+            max(collaborators_timings),
+            statistics.stdev(collaborators_timings) if len(
+                collaborators_timings) > 1 else 0
+        ])
+
+        if len(all_authors) > 1:
+            print("benchmarking get_coauthor_articles...")
+            coauthor_articles_timings = []
+            for i in range(iterations):
+                author = random_authors[i % len(random_authors)]
+                coauthor = random_authors[(i + 1) % len(random_authors)]
+                if author == coauthor and len(random_authors) > 1:
+                    coauthor = random_authors[(i + 2) % len(random_authors)]
+
+                start_time = time.time()
+                self.get_coauthor_articles(author, coauthor)
+                coauthor_articles_timings.append(time.time() - start_time)
+
+            detailed_timing["get_coauthor_articles"] = coauthor_articles_timings
+            results.append([
+                "get_coauthor_articles",
+                statistics.mean(coauthor_articles_timings),
+                statistics.median(coauthor_articles_timings),
+                min(coauthor_articles_timings),
+                max(coauthor_articles_timings),
+                statistics.stdev(coauthor_articles_timings) if len(
+                    coauthor_articles_timings) > 1 else 0
+            ])
+
+        if all_keywords:
+            print("benchmarking search_articles_by_keywords...")
+            keyword_search_timings = []
+            random_keywords = random.choices(
+                all_keywords, k=min(iterations, len(all_keywords)))
+            for i in range(iterations):
+                keyword = random_keywords[i % len(random_keywords)]
+                start_time = time.time()
+                self.search_articles_by_keywords(keyword)
+                keyword_search_timings.append(time.time() - start_time)
+
+            detailed_timing["search_articles_by_keywords"] = keyword_search_timings
+            results.append([
+                "search_articles_by_keywords",
+                statistics.mean(keyword_search_timings),
+                statistics.median(keyword_search_timings),
+                min(keyword_search_timings),
+                max(keyword_search_timings),
+                statistics.stdev(keyword_search_timings) if len(
+                    keyword_search_timings) > 1 else 0
+            ])
+
+        print("benchmarking get_yearly_keyword_frequencies...")
+        start_time = time.time()
+        self.get_yearly_keyword_frequencies()
+        yearly_keywords_time = time.time() - start_time
+
+        detailed_timing["get_yearly_keyword_frequencies"] = [
+            yearly_keywords_time]
+        results.append([
+            "get_yearly_keyword_frequencies",
+            yearly_keywords_time,
+            yearly_keywords_time,
+            yearly_keywords_time,
+            yearly_keywords_time,
+            0
+        ])
+
+        print("\n--- Benchmark Results (Unit: Second) ---")
+        headers = ["Function", "Avg", "Med", "Min", "Max", "Std"]
+        print(tabulate(results, headers=headers, tablefmt="grid", floatfmt=".8f"))
 
     def get_article_by_id(self, article_id: int) -> Optional[Article]:
         location_info = self.main_index.find(article_id)
