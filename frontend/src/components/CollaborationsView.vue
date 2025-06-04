@@ -328,7 +328,7 @@ function handleCollaborationNetworkChartClick(params) {
 async function fetchCoauthoredArticles(author, coauthor) {
   isLoadingCollabArticles.value = true
   try {
-    const result = await api.author.getAuthorCoauthoredArticles(author, coauthor)
+    const result = await api.author.getAuthorCoauthoredArticles(author.trim(), coauthor.trim())
     coauthoredArticles.value = result.data
     toast.success('Coauthored articles fetched successfully!')
   } catch (error) {
